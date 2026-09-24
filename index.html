@@ -892,6 +892,7 @@ function tryCast(w, id, tx, ty){
   }
   const cdv = s.cd[L] * (1 - .08*w.items.orb);
   w.cd[id] = cdv; w.cdMax[id] = cdv;
+  if (w.actor) w.actor.castT = .35;
   return true;
 }
 function lightning(w, nx, ny, range, dmg, kb){
@@ -1427,41 +1428,232 @@ function sync(list, create, update, setName){
 }
 
 /* warlock models */
+/* ---------- warlock models ---------- */
+// Model space: feet on y=0, facing +x, hood tip near y=78. Cloak and robe skirt are CPU-deformed cloth.
+const UP = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3();
+const lerp = (a, b, k) => a + (b - a)*k;
+function setLimb(m, a, b){
+  _d.subVectors(b, a); const L = _d.length() || 1;
+  m.position.addVectors(a, b).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(UP, _d.divideScalar(L));
+  m.scale.set(1, L, 1);
+}
+const MAT = {
+  metal: new THREE.MeshStandardMaterial({ color:0x2e2622, roughness:.4, metalness:.7 }),
+  skin:  new THREE.MeshStandardMaterial({ color:0x5f6b58, roughness:.8 }),
+  wood:  new THREE.MeshStandardMaterial({ color:0x4a2f1f, roughness:.9 }),
+  pants: new THREE.MeshStandardMaterial({ color:0x17110f, roughness:1 }),
+  face:  new THREE.MeshBasicMaterial({ color:0x040202 }),
+};
+const LIMB_GEO = {
+  sleeve: new THREE.CylinderGeometry(5, 3.4, 1, 9, 1, true),
+  thigh: new THREE.CylinderGeometry(2.7, 2.3, 15, 7),
+  shin: new THREE.CylinderGeometry(2.3, 2, 14, 7),
+  boot: new THREE.BoxGeometry(9, 4, 5.6),
+  hand: new THREE.SphereGeometry(2.7, 8, 6),
+  torso: new THREE.CylinderGeometry(9.2, 10.8, 22, 14),
+  belt: new THREE.TorusGeometry(10.7, 1.3, 6, 22).rotateX(Math.PI/2),
+  buckle: new THREE.BoxGeometry(2, 4, 4.5),
+  pauldron: new THREE.SphereGeometry(1, 12, 8, 0, TAU, 0, Math.PI/2),
+  spike: new THREE.ConeGeometry(1.5, 8, 5),
+  collar: new THREE.CylinderGeometry(9.5, 6.5, 11, 14, 1, true, Math.PI, Math.PI),
+  hood: new THREE.SphereGeometry(9.6, 18, 12, Math.PI + .5, TAU - 1, 0, Math.PI*.64),
+  hoodTip: new THREE.ConeGeometry(5.4, 20, 10),
+  shaft: new THREE.CylinderGeometry(1.2, 1.6, 90, 6),
+  hook: new THREE.TorusGeometry(5.2, 1.3, 6, 14, Math.PI*1.35),
+  gem: new THREE.OctahedronGeometry(3.4, 0),
+};
+const CL_C = 8, CL_R = 10;
+function makeCloakGeo(base, trim){
+  const g = new THREE.BufferGeometry(), n = (CL_C + 1)*(CL_R + 1);
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3), 3).setUsage(THREE.DynamicDrawUsage));
+  const col = new Float32Array(n*3), idx = [], c = new THREE.Color();
+  for (let j = 0; j <= CL_R; j++) for (let i = 0; i <= CL_C; i++){
+    const k = j*(CL_C + 1) + i;
+    const edge = j === CL_R ? 1 : (i === 0 || i === CL_C) ? .8 : j === CL_R - 1 ? .35 : 0;
+    c.copy(base).lerp(trim, edge); col.set([c.r, c.g, c.b], k*3);
+    if (i < CL_C && j < CL_R){ const a = k, b = k + 1, d = k + CL_C + 1, e = d + 1; idx.push(a, d, b, b, d, e); }
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setIndex(idx);
+  return g;
+}
+function makeSkirtGeo(base, trim){
+  const g = new THREE.CylinderGeometry(10.6, 16.5, 28, 20, 5, true);
+  const pa = g.attributes.position, col = new Float32Array(pa.count*3), c = new THREE.Color();
+  for (let i = 0; i < pa.count; i++){ const tt = (14 - pa.getY(i))/28; c.copy(base).lerp(trim, tt > .9 ? 1 : 0); col.set([c.r, c.g, c.b], i*3); }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  pa.setUsage(THREE.DynamicDrawUsage);
+  return g;
+}
+
 function buildActors(){
   for (const w of state.warlocks) if (w.actor) return;
   scene.children.filter(c => c.userData.actor).forEach(c => { scene.remove(c); disposeObj(c); });
   labelsEl.querySelectorAll('.wl').forEach(el => el.remove());
   for (const w of state.warlocks){
     const col = new THREE.Color(w.color);
+    const robeCol = col.clone().multiplyScalar(.2).lerp(new THREE.Color(0x120b09), .4);
+    const robeMat = new THREE.MeshStandardMaterial({ color:robeCol, roughness:.9 });
+    const trimCol = col.clone().multiplyScalar(.62);
+    const trimMat = new THREE.MeshStandardMaterial({ color:trimCol, roughness:.45, metalness:.3 });
+    const clothMat = new THREE.MeshStandardMaterial({ color:0xffffff, vertexColors:true, roughness:.85, side:THREE.DoubleSide });
+    const glowCol = col.clone().lerp(new THREE.Color(1, 1, 1), .45);
+
     const group = new THREE.Group(); group.userData.actor = true;
-    const body = new THREE.Group(); body.scale.setScalar(1.55); group.add(body);
-    const robeMat = new THREE.MeshStandardMaterial({ color:col.clone().multiplyScalar(.3), roughness:.85, emissive:0x000000 });
-    const trimMat = new THREE.MeshStandardMaterial({ color:col, roughness:.55, emissive:col.clone().multiplyScalar(.12) });
-    const add = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; body.add(m); return m; };
-    add(new THREE.ConeGeometry(16, 38, 20), robeMat, 0, 19, 0);
-    add(new THREE.CylinderGeometry(16.3, 16.6, 3, 20), trimMat, 0, 1.5, 0);
-    add(GEO.sphere, trimMat, 0, 32, 0, 11.5, 8.5, 12.5);
-    const hood = add(new THREE.ConeGeometry(8.8, 21, 14), trimMat, -1.5, 44, 0); hood.rotation.z = .28;
-    add(GEO.sphere, new THREE.MeshBasicMaterial({ color:0x050302 }), 3.6, 38.5, 0, 5.6, 5.6, 5.6).castShadow = false;
-    const eyeMat = new THREE.MeshBasicMaterial({ color:col.clone().lerp(new THREE.Color(1,1,1), .5) });
-    add(GEO.sphere, eyeMat, 8.4, 39.5, 2.2, 1.2, 1.2, 1.2).castShadow = false;
-    add(GEO.sphere, eyeMat, 8.4, 39.5, -2.2, 1.2, 1.2, 1.2).castShadow = false;
-    const staff = add(new THREE.CylinderGeometry(1.3, 1.7, 60, 6), new THREE.MeshStandardMaterial({ color:0x5a3b26, roughness:.9 }), 6, 28, 13); staff.rotation.z = -.16;
-    const tipPos = new THREE.Vector3(6 + Math.sin(.16)*30, 28 + Math.cos(.16)*30 + 3, 13);
-    const tip = add(GEO.sphere, new THREE.MeshBasicMaterial({ color:col.clone().lerp(new THREE.Color(1,1,1), .35) }), tipPos.x, tipPos.y, tipPos.z, 3.8, 3.8, 3.8); tip.castShadow = false;
-    const tipGlow = glow(col, 34, .9); tipGlow.position.copy(tipPos); body.add(tipGlow);
+    const root = new THREE.Group(); group.add(root);            // turns to face
+    const hips = new THREE.Group(); hips.position.y = 30; root.add(hips);
+    const spine = new THREE.Group(); hips.add(spine);           // leans
+    const upper = new THREE.Group(); upper.position.y = -30; spine.add(upper); // model-space coords below
+    const mk = (geo, mat, parent, x = 0, y = 0, z = 0, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; parent.add(m); return m; };
+
+    // legs
+    const legs = [5.2, -5.2].map(z => {
+      const leg = new THREE.Group(); leg.position.set(0, 0, z); hips.add(leg);
+      mk(LIMB_GEO.thigh, MAT.pants, leg, 0, -7.5, 0);
+      const knee = new THREE.Group(); knee.position.y = -15; leg.add(knee);
+      mk(LIMB_GEO.shin, MAT.pants, knee, 0, -7, 0);
+      mk(LIMB_GEO.boot, MAT.metal, knee, 2.2, -13, 0);
+      return { leg, knee };
+    });
+
+    // robe skirt (cloth)
+    const skirtGeo = makeSkirtGeo(robeCol, trimCol);
+    const skirt = mk(skirtGeo, clothMat, upper, 0, 16, 0);
+    // torso, belt, pauldrons, collar
+    mk(LIMB_GEO.torso, robeMat, upper, 0, 41, 0);
+    mk(LIMB_GEO.belt, trimMat, upper, 0, 31.5, 0);
+    mk(LIMB_GEO.buckle, MAT.metal, upper, 10.8, 31.5, 0);
+    for (const s of [1, -1]){
+      const p = mk(LIMB_GEO.pauldron, trimMat, upper, -.5, 49.5, 11.5*s); p.scale.set(7.5, 6, 8.5);
+      for (const [dx, tilt] of [[-2.5, .45], [2.5, .3]]){ const sp = mk(LIMB_GEO.spike, MAT.metal, upper, dx - .5, 57, 13.5*s); sp.rotation.x = tilt*s; }
+    }
+    const collar = mk(LIMB_GEO.collar, trimMat, upper, -1, 57, 0); collar.material = new THREE.MeshStandardMaterial({ color:col.clone().multiplyScalar(.55), roughness:.6, side:THREE.DoubleSide });
+    // head and hood
+    const head = new THREE.Group(); head.position.set(0, 60, 0); upper.add(head);
+    mk(GEO.sphere, MAT.face, head, 1.2, 0, 0, false).scale.setScalar(6.4);
+    const hood = mk(LIMB_GEO.hood, new THREE.MeshStandardMaterial({ color:robeCol.clone().lerp(col, .25), roughness:.85, side:THREE.DoubleSide }), head, 0, -1, 0);
+    const tip = mk(LIMB_GEO.hoodTip, hood.material, head, -6.5, 11.5, 0); tip.rotation.z = 1.0;
+    const eyeMat = new THREE.MeshBasicMaterial({ color:glowCol });
+    mk(GEO.sphere, eyeMat, head, 6.6, 1, 2.3, false).scale.setScalar(1.15);
+    mk(GEO.sphere, eyeMat, head, 6.6, 1, -2.3, false).scale.setScalar(1.15);
+    // cloak (cloth)
+    const cloakGeo = makeCloakGeo(robeCol.clone().multiplyScalar(.8), trimCol);
+    const cloak = mk(cloakGeo, clothMat, upper);
+    // arms
+    const armR = mk(LIMB_GEO.sleeve, robeMat, upper), armL = mk(LIMB_GEO.sleeve, robeMat, upper);
+    armR.material = armL.material = new THREE.MeshStandardMaterial({ color:robeCol, roughness:.9, side:THREE.DoubleSide });
+    const handR = mk(LIMB_GEO.hand, MAT.skin, upper), handL = mk(LIMB_GEO.hand, MAT.skin, upper);
+    // staff, pivoting at the grip
+    const staff = new THREE.Group(); upper.add(staff);
+    mk(LIMB_GEO.shaft, MAT.wood, staff, 0, 7, 0);
+    const hook = mk(LIMB_GEO.hook, MAT.wood, staff, -1.5, 55, 0); hook.rotation.z = -.4;
+    const gem = mk(LIMB_GEO.gem, new THREE.MeshBasicMaterial({ color:glowCol }), staff, 1, 56, 0, false); gem.scale.y = 1.5;
+    const gemGlow = glow(col, 34, .95); gemGlow.position.set(1, 56, 0); staff.add(gemGlow);
+
     const sel = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color:w.human ? 0xf5c542 : col, transparent:true, opacity:w.human ? .9 : .45, depthWrite:false }));
     sel.scale.set(w.human ? 25 : 22, 1, w.human ? 25 : 22); sel.position.y = .9; group.add(sel);
-    const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(40, 1), additive(0x8fd8ff, .55, { wireframe:true }));
-    shield.userData.ownGeo = true; shield.position.y = 38; shield.visible = false; group.add(shield);
-    const shieldFill = glow(0x8fd8ff, 90, .35); shieldFill.position.y = 26; shield.add(shieldFill); shieldFill.scale.set(3, 3, 1);
+    const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(42, 1), additive(0x8fd8ff, .55, { wireframe:true }));
+    shield.userData.ownGeo = true; shield.position.y = 40; shield.visible = false; group.add(shield);
+    const shieldFill = glow(0x8fd8ff, 90, .35); shieldFill.scale.set(3, 3, 1); shield.add(shieldFill);
     scene.add(group);
+
     const label = document.createElement('div');
     label.className = 'wl'; label.style.setProperty('--c', w.color);
     label.innerHTML = `${w.human ? '' : `<span class="n">${esc(w.name)}</span>`}<span class="b"><i></i></span>`;
     labelsEl.appendChild(label);
-    w.actor = { group, body, robeMat, sel, shield, label, bar:label.querySelector('i') };
+    w.actor = { group, root, hips, spine, upper, head, legs, skirt, skirtGeo, skirtBase:skirtGeo.attributes.position.array.slice(), cloak, cloakGeo,
+      armR, armL, handR, handL, staff, gemGlow, sel, shield, label, bar:label.querySelector('i'),
+      flashMats:[robeMat, clothMat], lx:w.x, ly:w.y, phase:Math.random()*TAU, walk:0, flare:0, lat:0, kn:0, castT:0,
+      shR:new THREE.Vector3(-.5, 48.5, -12.5), shL:new THREE.Vector3(-.5, 48.5, 12.5), hR:new THREE.Vector3(), hL:new THREE.Vector3() };
     w.visY = 0;
+  }
+}
+
+function animateActor(w, a, dt, inLava){
+  const t = state.time;
+  const dx = w.x - a.lx, dy = w.y - a.ly; a.lx = w.x; a.ly = w.y;
+  const moved = hyp(dx, dy);
+  const walking = w.mx !== null && state.phase === 'fight' && !w.dash && moved > .02 && !inLava;
+  a.walk += ((walking ? 1 : 0) - a.walk)*Math.min(1, dt*8);
+  if (walking) a.phase += Math.min(moved, 30)*TAU/64;
+  const ph = a.phase, wk = a.walk;
+  const cf = Math.cos(w.facing), sf = Math.sin(w.facing);
+  const vx = dt > 0 ? dx/dt : 0, vy = dt > 0 ? dy/dt : 0;
+  const fwd = vx*cf + vy*sf, lat = -vx*sf + vy*cf;
+  const kf = (w.vx*cf + w.vy*sf)/300, kl = (-w.vx*sf + w.vy*cf)/300;
+  const ease = Math.min(1, dt*4);
+  a.flare += (clamp(fwd/140, -.15, 2.6) - a.flare)*ease;
+  a.lat += (clamp(lat/140, -2, 2) - a.lat)*ease;
+  a.kn += (clamp(hyp(w.vx, w.vy)/300, 0, 1) - a.kn)*Math.min(1, dt*6);
+  if (a.castT > 0) a.castT -= dt;
+  const cast = Math.max(0, a.castT/.35), kn = a.kn;
+
+  // legs and body
+  const amp = .52*wk, sL = Math.sin(ph), cL = Math.cos(ph);
+  a.legs[0].leg.rotation.z = sL*amp;  a.legs[1].leg.rotation.z = -sL*amp;
+  a.legs[0].knee.rotation.z = -Math.max(0, cL)*.95*wk;  a.legs[1].knee.rotation.z = -Math.max(0, -cL)*.95*wk;
+  a.hips.position.y = 30 + wk*(1.8*(Math.cos(2*ph)*.5 + .5) - 1.3) + Math.sin(t*2.2 + w.id)*.45*(1 - wk);
+  a.hips.rotation.x = sL*.05*wk;
+  a.spine.rotation.z = -.09*wk + clamp(kf, -1, 1)*.4;
+  a.spine.rotation.x = -clamp(kl, -1, 1)*.4;
+  a.head.rotation.z = -.06*wk + Math.sin(t*1.7 + w.id)*.03;
+  const footL = Math.sin(sL*amp)*28, footR = Math.sin(-sL*amp)*28;
+
+  // robe skirt follows the stepping legs
+  { const pa = a.skirtGeo.attributes.position, b = a.skirtBase;
+    for (let i = 0; i < pa.count; i++){
+      const x0 = b[i*3], y0 = b[i*3+1], z0 = b[i*3+2];
+      const tt = (14 - y0)/28, t2 = tt*tt, r0 = Math.hypot(x0, z0) || 1, side = Math.abs(z0)/r0;
+      const grow = 1 + tt*(wk*.08 + kn*.15);
+      let x = x0*grow, z = z0*grow;
+      x += t2*(z0 > 0 ? footL : footR)*.75*(.35 + .65*side);
+      x -= t2*(a.flare*5 + kf*9);
+      z -= t2*(a.lat*5 + kl*9);
+      x += Math.sin(t*5 + tt*3 + Math.atan2(z0, x0)*2)*tt*(.5 + wk*.8);
+      pa.setXYZ(i, x, y0, z);
+    }
+    pa.needsUpdate = true; a.skirtGeo.computeVertexNormals(); }
+
+  // cloak: hangs from the shoulders, trails behind motion, ripples
+  { const cp = a.cloakGeo.attributes.position; let k = 0;
+    const lift = Math.max(0, a.flare) + kn*1.4;
+    for (let j = 0; j <= CL_R; j++){
+      const v = j/CL_R, v2 = v*v;
+      for (let i = 0; i <= CL_C; i++){
+        const u = i/CL_C*2 - 1, ang = u*1.2, R = 12.5 + v*4.5 + lift*v*3;
+        let x = -Math.cos(ang)*R - 1.5, z = Math.sin(ang)*R*1.05, y = 51 - v*46;
+        x -= v2*(3 + a.flare*15 + kn*16 + Math.max(0, kf)*10);
+        y += v2*Math.min(1.2, lift)*9;
+        if (j >= CL_R - 1 && i % 2) y += j === CL_R ? 4.5 : 1.5;  // tattered hem
+        x += Math.sin(t*5.5 - v*4.5 + u*1.7)*v*(.7 + wk*2 + lift*1.8);
+        z += Math.cos(t*4.3 - v*3.7 + u*2.3)*v*(.5 + wk*1.2) + sL*v*2.4*wk - (a.lat + kl*2)*v2*7;
+        cp.setXYZ(k++, x, y, z);
+      }
+    }
+    cp.needsUpdate = true; a.cloakGeo.computeVertexNormals(); }
+
+  // staff used as a walking cane: planted for 60% of each step, then swung forward
+  const c = ((ph/Math.PI) % 1 + 1) % 1;
+  let th = c < .6 ? lerp(.26, -.26, c/.6) : lerp(-.26, .26, (c - .6)/.4);
+  let raise = c < .6 ? 0 : Math.sin((c - .6)/.4*Math.PI)*5;
+  th = lerp(.1 + Math.sin(t*1.3 + w.id)*.02, th, wk); raise *= wk;
+  th = lerp(th, .55, kn*.7);
+  th = lerp(th, -1.05, cast);
+  const gx = 10 + cast*7, gy = 38*Math.cos(th) + raise + cast*9 + kn*6, gz = -15.5;
+  a.staff.position.set(gx, gy, gz); a.staff.rotation.set(.06, 0, th);
+  a.hR.set(gx, gy, gz); a.handR.position.copy(a.hR); setLimb(a.armR, a.shR, a.hR);
+  a.hL.set(1 - sL*9*wk, 25 + Math.abs(sL)*2*wk, 14);
+  a.hL.lerp(_d.set(17, 45, 8), cast); a.hL.lerp(_d.set(3, 64, 19), kn*.8);
+  a.handL.position.copy(a.hL); setLimb(a.armL, a.shL, a.hL);
+  const gs = 34 + cast*50 + Math.sin(t*3 + w.id)*3; a.gemGlow.scale.set(gs, gs, 1);
+
+  // hit flash / burning in lava
+  const f = w.flash > 0 ? w.flash*6 : 0;
+  for (const m of a.flashMats){
+    if (f) m.emissive.setRGB(f, f, f);
+    else if (inLava){ const p = .5 + .3*Math.sin(t*16); m.emissive.setRGB(p, p*.3, 0); }
+    else m.emissive.setRGB(0, 0, 0);
   }
 }
 
@@ -1627,18 +1819,13 @@ function render3D(){
     const tY = inLava ? LAVA_Y + 4 : Math.min(18, hyp(w.vx, w.vy)*.03);
     w.visY += (tY - w.visY)*Math.min(1, dt*10);
     a.group.position.set(w.x, w.visY, w.y);
-    a.body.rotation.y = -w.facing;
-    const moving = w.mx !== null && state.phase === 'fight';
-    a.body.position.y = Math.sin(state.time*(moving ? 10 : 2.4) + w.id)*(moving ? 1.8 : 1.1);
-    a.body.rotation.z = moving ? -.08 : 0;
-    if (w.flash > 0) a.robeMat.emissive.setRGB(w.flash*6, w.flash*6, w.flash*6);
-    else if (inLava){ const p = .5 + .3*Math.sin(state.time*16); a.robeMat.emissive.setRGB(p, p*.3, 0); }
-    else a.robeMat.emissive.setRGB(0, 0, 0);
+    a.root.rotation.y = -w.facing;
+    animateActor(w, a, dt, inLava);
     a.sel.visible = !inLava;
     if (w.human) a.sel.rotation.y = state.time*.8;
     a.shield.visible = w.shieldT > 0;
     if (w.shieldT > 0){ a.shield.rotation.y = state.time*1.8; a.shield.rotation.x = state.time*.9; a.shield.material.opacity = .45 + .3*Math.sin(state.time*22); }
-    const [lx, ly] = project(w.x, w.visY + 104, w.y);
+    const [lx, ly] = project(w.x, w.visY + 100, w.y);
     a.label.style.transform = `translate(${lx.toFixed(1)}px,${ly.toFixed(1)}px) translate(-50%,-100%)`;
     const f = clamp(w.hp/w.maxHp, 0, 1);
     a.bar.style.transform = `scaleX(${f.toFixed(3)})`;
