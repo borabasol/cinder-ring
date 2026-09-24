@@ -261,7 +261,7 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
         <summary>How to play</summary>
         <dl>
           <dt>Move</dt><dd>Right-click (or tap) the ground. Hold right-click to steer.</dd>
-          <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
+          <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
           <dt>Lava</dt><dd>Burns 14 HP a second. The lower your HP, the farther every hit throws you.</dd>
           <dt>Ring</dt><dd>Crumbles every 12 seconds. Fireballs cancel each other out in mid-air.</dd>
           <dt>Gold</dt><dd>Earned by surviving, killing and dealing damage. Spend it between rounds.</dd>
@@ -333,10 +333,12 @@ const SP = {
     desc:'Briefly reflect projectiles at their caster and block Lightning.' },
   blink:    { key:'D', name:'Blink', cost:[70,70,100], cd:[11,9,7], range:[260,300,340],
     desc:'Teleport a short distance. Your way back from the lava edge.' },
+  drain:    { key:'T', name:'Soul Drain', cost:[90,80,110], cd:[9,8,7], dmg:[8,10,12], kb:[220,240,260], heal:[14,18,22], speed:400, life:1.5,
+    desc:'A green orb of stolen life. If it hits, it flies back to you and heals you.' },
   gravity:  { key:'F', name:'Gravity Well', cost:[110,90,120], cd:[16,14,12], pull:[520,620,720], rad:[190,200,210], dur:[2.4,2.8,3.2], range:420,
     desc:'A singularity that drags rivals toward it. Place it beyond them, over the lava.' },
 };
-const ORDER = ['fireball','lightning','homing','meteor','thrust','shield','blink','gravity'];
+const ORDER = ['fireball','lightning','homing','meteor','drain','thrust','shield','blink','gravity'];
 const KEYMAP = {}; ORDER.forEach(id => KEYMAP[SP[id].key] = id);
 const ITEMS = {
   boots: { name:'Emberwalk Boots', cost:[50,70,90], desc:'+12% move speed per level' },
@@ -361,6 +363,7 @@ const ICON = {
   thrust:   S('<path d="M3 6l6 6-6 6M10 6l6 6-6 6M19 5v14"/>'),
   shield:   S('<path d="M12 3 20 7.5v9L12 21 4 16.5v-9z" fill="currentColor" fill-opacity=".15"/><path d="M8.5 12h7"/>'),
   blink:    S('<circle cx="5" cy="18" r="2"/><circle cx="18.5" cy="6.5" r="3" fill="currentColor" fill-opacity=".25"/><path d="M7 16C10 9 12.5 7.5 15.5 7.3" stroke-dasharray="1.6 2.6"/>'),
+  drain:    S('<circle cx="8" cy="12" r="4.2" fill="currentColor" fill-opacity=".25"/><path d="M12.5 9.5C15 7 19 7.5 20.5 10.5M20.5 10.5l.4-3.2M20.5 10.5l-3.2-.2M12.5 14.5C15 17 19 16.5 20.5 13.5"/>'),
   gravity:  S('<circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="6" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="10" stroke-dasharray="2 4"/>'),
   boots:    S('<path d="M7 3v10l-3 4v3h15v-2c0-2-2-3-5-3.5L11 13V3z"/>'),
   cloak:    S('<path d="M12 3c-3 0-5 2-5 5L4 21h16L17 8c0-3-2-5-5-5z"/><path d="M12 8v13"/>'),
@@ -714,6 +717,8 @@ const sfx = {
   tick(){ AU.tone('square', 660, 660, .08, .06); },
   go(){ AU.tone('square', 880, 1320, .18, .08); },
   coin(){ AU.tone('square', 990, 1480, .1, .06); },
+  drain(){ AU.tone('sine', 520, 260, .35, .14); AU.noise(.3, 1800, 900, 2, .08, 'bandpass'); },
+  heal(){ AU.tone('sine', 660, 990, .25, .12); AU.tone('triangle', 990, 1320, .3, .06); },
 };
 
 /* ---------- state ---------- */
@@ -861,6 +866,7 @@ function spellStats(id, lv){
   if (s.range && Array.isArray(s.range)) parts.push(`${s.range[L]} range`);
   if (s.dur) parts.push(`${s.dur[L]}s`);
   if (s.turn) parts.push(`turn ${s.turn[L]}`);
+  if (s.heal) parts.push(`${s.heal[L]} heal`);
   return parts.join(' · ');
 }
 function pips(lv){ return [1,2,3].map(i => `<i class="${i<=lv?'on':''}"></i>`).join(''); }
@@ -898,7 +904,7 @@ function buy(w, kind, id){
   w.gold -= c; w.items[id] = lv+1; return true;
 }
 function botShop(w){
-  const firstPick = { blink:6, lightning:4, homing:3, shield:3, thrust:3, meteor:2.5, gravity:2 };
+  const firstPick = { blink:6, lightning:4, homing:3, drain:3, shield:3, thrust:3, meteor:2.5, gravity:2 };
   for (let guard=0; guard<14; guard++){
     const opts = [];
     for (const id of ORDER){
@@ -947,6 +953,9 @@ function tryCast(w, id, tx, ty){
     case 'homing':
       state.projectiles.push({ type:'homing', owner:w, x:w.x+nx*24, y:w.y+ny*24, vx:nx*s.speed, vy:ny*s.speed, r:11, life:s.life, dmg:s.dmg[L], kb:s.kb[L], turn:s.turn[L], target:null, spin:0 });
       sfx.orb(); break;
+    case 'drain':
+      state.projectiles.push({ type:'drain', owner:w, x:w.x+nx*24, y:w.y+ny*24, vx:nx*s.speed, vy:ny*s.speed, r:10, life:s.life, dmg:s.dmg[L], kb:s.kb[L], heal:s.heal[L], spin:0 });
+      sfx.drain(); break;
     case 'lightning': lightning(w, nx, ny, s.range[L], s.dmg[L], s.kb[L]); sfx.zap(); break;
     case 'meteor': {
       const dd = Math.min(d, s.range);
@@ -1073,7 +1082,7 @@ function botThink(w, dt){
 
   let th = null, tmin = .9;
   for (const p of state.projectiles){
-    if (p.owner === w || p.type === 'well') continue;
+    if (p.owner === w || p.type === 'well' || p.type === 'drainBack') continue;
     const vv = p.vx*p.vx + p.vy*p.vy; if (!vv) continue;
     const tca = ((w.x-p.x)*p.vx + (w.y-p.y)*p.vy) / vv;
     if (tca < 0 || tca > tmin) continue;
@@ -1134,6 +1143,7 @@ function botAttack(w, tg, D){
     const outward = (tg.x*dx + tg.y*dy) / (tR*d);
     if (outward > .35) return tryCast(w, 'thrust', tg.x, tg.y);
   }
+  if (ready('drain') && d < 560 && (w.hp < w.maxHp*.75 || Math.random() < .3)) return tryCast(w, 'drain', ...aim(...lead(d/SP.drain.speed)));
   if (ready('homing') && d < 650 && Math.random() < .6) return tryCast(w, 'homing', tg.x, tg.y);
   if (ready('fireball') && d < 640) return tryCast(w, 'fireball', ...aim(...lead(d/SP.fireball.speed)));
 }
@@ -1210,6 +1220,23 @@ function simulate(dt){
   const P = state.projectiles;
   for (const p of P){
     if (p.dead) continue;
+    if (p.type === 'drainBack'){
+      const o = p.owner;
+      if (!o.alive){ p.dead = true; burst(p.x, p.y, 8, { col:[90,255,140], sp:[20,80], life:[.2,.5], size:[1.5,3] }); continue; }
+      const dx = o.x - p.x, dy = o.y - p.y, d = hyp(dx, dy) || 1, sp = 560;
+      p.vx += (dx/d*sp - p.vx)*Math.min(1, dt*7); p.vy += (dy/d*sp - p.vy)*Math.min(1, dt*7);
+      p.x += p.vx*dt; p.y += p.vy*dt; p.spin += dt*10;
+      burst(p.x, p.y, 2, { col:[80,255,rand(110,170)], sp:[5,30], life:[.3,.6], size:[2,4.5] });
+      if (d < o.r + 8){
+        const before = o.hp; o.hp = Math.min(o.maxHp, o.hp + p.heal); p.dead = true;
+        state.texts.push({ x:o.x, y:o.y - 28, t:1, T:1, s:'+' + Math.round(o.hp - before), c:'#7dffa8' });
+        burst(o.x, o.y, 26, { col:[90,255,150], sp:[30,140], life:[.4,.9], size:[2,4.5], z:rand(10,50), vz:[30,120] });
+        state.rings.push({ x:o.x, y:o.y, r0:10, r1:45, t:.45, T:.45, col:'90,255,150', w:3 });
+        state.flashes.push({ x:o.x, y:o.y, z:40, t:.35, T:.35, i:3, col:0x5cff8e });
+        sfx.heal();
+      }
+      continue;
+    }
     if (p.type === 'homing'){
       if (!p.target || !p.target.alive) p.target = nearestEnemy(p.owner, p.x, p.y);
       if (p.target){
@@ -1226,7 +1253,11 @@ function simulate(dt){
       if (p.travel <= 0){ deployWell(p); continue; }
     }
     if (p.life <= 0){ p.dead = true; burst(p.x, p.y, 6, { col:[255,150,60], sp:[20,80], life:[.2,.4], size:[1.5,3] }); continue; }
-    if (p.type === 'fireball') burst(p.x, p.y, 1, { col:[255,rand(110,190),50], sp:[5,30], life:[.2,.4], size:[2,4.5], vx:-p.vx*.1, vy:-p.vy*.1 });
+    if (p.type === 'fireball'){
+      burst(p.x, p.y, 2, { col:[255,rand(100,200),40], sp:[5,35], life:[.25,.5], size:[3,6.5], vx:-p.vx*.12, vy:-p.vy*.12, vz:[0,40] });
+      if (Math.random() < .35) burst(p.x, p.y, 1, { col:[40,28,24], sp:[5,20], life:[.5,.9], size:[4,8], glow:false, vx:-p.vx*.05, vy:-p.vy*.05, vz:[10,40] });
+    }
+    else if (p.type === 'drain') burst(p.x, p.y, 2, { col:[70,255,rand(100,160)], sp:[4,26], life:[.35,.7], size:[2,4.5], vx:-p.vx*.08, vy:-p.vy*.08 });
     else if (p.type === 'homing') burst(p.x, p.y, 1, { col:p.owner.rgb, sp:[5,25], life:[.3,.6], size:[1.5,3.5] });
     else burst(p.x, p.y, 1, { col:[170,120,255], sp:[5,20], life:[.2,.5], size:[1.5,3] });
 
@@ -1243,16 +1274,21 @@ function simulate(dt){
         }
         const sp = hyp(p.vx, p.vy) || 1;
         hit(w, p.owner, p.dmg, p.vx/sp, p.vy/sp, p.kb);
-        explode(p.x, p.y, false); sfx.boom(false);
+        if (p.type === 'drain'){
+          burst(p.x, p.y, 18, { col:[90,255,150], sp:[40,160], life:[.25,.55], size:[2,4] });
+          state.rings.push({ x:p.x, y:p.y, r0:6, r1:34, t:.3, T:.3, col:'90,255,150', w:3 });
+          if (p.owner.alive) state.projectiles.push({ type:'drainBack', owner:p.owner, x:p.x, y:p.y, vx:-p.vx*.4, vy:-p.vy*.4, r:9, life:6, heal:p.heal, spin:0 });
+          sfx.drain();
+        } else { explode(p.x, p.y, false); sfx.boom(false); }
         p.dead = true; break;
       }
     }
     if (hyp(p.x, p.y) > 1100) p.dead = true;
   }
   for (let i=0;i<P.length;i++){
-    const a = P[i]; if (a.dead || a.type === 'well') continue;
+    const a = P[i]; if (a.dead || a.type === 'well' || a.type === 'drainBack') continue;
     for (let j=i+1;j<P.length;j++){
-      const b = P[j]; if (b.dead || b.type === 'well' || a.owner === b.owner) continue;
+      const b = P[j]; if (b.dead || b.type === 'well' || b.type === 'drainBack' || a.owner === b.owner) continue;
       if (hyp(a.x-b.x, a.y-b.y) < a.r + b.r){ a.dead = b.dead = true; explode((a.x+b.x)/2, (a.y+b.y)/2, false); sfx.boom(false); break; }
     }
   }
@@ -1495,7 +1531,7 @@ function project(x, h, y){
   return [(tmpV.x + 1)/2*W, (1 - tmpV.y)/2*H, tmpV.z < 1];
 }
 function disposeObj(o){
-  o.traverse(c => { if (c.material) c.material.dispose(); if (c.userData.ownGeo && c.geometry) c.geometry.dispose(); });
+  o.traverse(c => { if (c.material && !c.material.userData.shared) c.material.dispose(); if (c.userData.ownGeo && c.geometry) c.geometry.dispose(); });
 }
 const prevSets = { proj:new Set(), well:new Set(), met:new Set(), ring:new Set(), bolt:new Set() };
 function sync(list, create, update, setName){
@@ -1526,6 +1562,7 @@ const MAT = {
   pants: new THREE.MeshStandardMaterial({ color:0x17110f, roughness:1 }),
   face:  new THREE.MeshBasicMaterial({ color:0x040202 }),
 };
+Object.values(MAT).forEach(m => m.userData.shared = true);
 const LIMB_GEO = {
   sleeve: new THREE.CylinderGeometry(5, 3.4, 1, 9, 1, true),
   thigh: new THREE.CylinderGeometry(2.7, 2.3, 15, 7),
@@ -1742,8 +1779,20 @@ function animateActor(w, a, dt, inLava){
 function makeProj(p){
   const g = new THREE.Group();
   if (p.type === 'fireball'){
-    const core = new THREE.Mesh(GEO.sphere, new THREE.MeshBasicMaterial({ color:0xfff2c8 })); core.scale.setScalar(6.5); g.add(core);
-    g.add(glow(0xff7a20, 80, .9), glow(0xffc070, 34));
+    // a ball of flame: white-hot core, flickering fire shell, streaming flame tail
+    const core = new THREE.Mesh(GEO.sphere, METEOR.fireCore); core.scale.setScalar(6); g.add(core);
+    const shell = new THREE.Mesh(GEO.sphere, METEOR.fireShell); shell.scale.setScalar(12.5); g.add(shell);
+    const halo = new THREE.Group(); g.add(halo);
+    const outer = new THREE.Mesh(GEO.sphere, METEOR.fireShell); outer.scale.set(13, 21, 13); outer.position.y = 7; halo.add(outer);
+    const tail = new THREE.Mesh(METEOR.tailGeo, METEOR.fireTail); tail.scale.set(10, 66, 10); tail.position.y = 33; halo.add(tail);
+    g.add(glow(0xff6a18, 76, .55), glow(0xffd28a, 28, .7));
+    g.userData = { halo, core, shell };
+  } else if (p.type === 'drain' || p.type === 'drainBack'){
+    const core = new THREE.Mesh(GEO.sphere, METEOR.drainCore); core.scale.setScalar(5.5); g.add(core);
+    const shell = new THREE.Mesh(GEO.sphere, METEOR.drainShell); shell.scale.setScalar(11); g.add(shell);
+    const ring = new THREE.Mesh(GEO.torus, additive(0x6dff9c, .85)); ring.scale.setScalar(14); g.add(ring);
+    g.add(glow(0x3dff7a, 60, .45), glow(0xc8ffd8, 22, .6));
+    g.userData = { ring, core };
   } else if (p.type === 'homing'){
     const c = new THREE.Color(p.owner.color);
     const core = new THREE.Mesh(GEO.sphere, new THREE.MeshBasicMaterial({ color:c.clone().lerp(new THREE.Color(1,1,1), .55) })); core.scale.setScalar(7.5); g.add(core);
@@ -1755,9 +1804,15 @@ function makeProj(p){
   }
   return g;
 }
+const _v = new THREE.Vector3();
 function updProj(p, g){
   g.position.set(p.x, 34, p.y);
   if (g.userData.ring){ g.userData.ring.rotation.x = p.spin; g.userData.ring.rotation.y = p.spin*.6; }
+  if (g.userData.halo){
+    const sp = hyp(p.vx, p.vy) || 1;
+    g.userData.halo.quaternion.setFromUnitVectors(UP, _v.set(-p.vx/sp, .08, -p.vy/sp).normalize());
+    const f = 1 + Math.sin(state.time*31 + p.x*.1)*.08; g.userData.core.scale.setScalar(6*f); g.userData.shell.scale.setScalar(12.5/f);
+  }
   if (p.type === 'homing' && p.lastOwner !== p.owner){
     p.lastOwner = p.owner; const c = new THREE.Color(p.owner.color);
     g.children.forEach(ch => { if (ch.material && ch !== g.children[0]) ch.material.color = c; });
@@ -1836,7 +1891,14 @@ const METEOR = (() => {
   const tailGeo = new THREE.ConeGeometry(1, 1, 18, 1, true);
   const dir = new THREE.Vector3(220, 700, -260).normalize();
   const outerMat = shellMat.clone(); outerMat.uniforms = { uTime:fxTime, uAlpha:{ value:.28 } }; shellMat.uniforms.uAlpha.value = .5;
-  return { geo, rockMat, coreMat, shellMat, outerMat, tailMat, tailGeo, dir, quat:new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir) };
+  const fireShell = shellMat.clone(); fireShell.uniforms = { uTime:fxTime, uAlpha:{ value:.55 } };
+  const fireTail = tailMat.clone(); fireTail.uniforms = { uTime:fxTime }; fireTail.fragmentShader = tailMat.fragmentShader.replace('a*0.45', 'a*0.9');
+  const fireCore = new THREE.MeshBasicMaterial({ color:0xfff4d0 });
+  const drainShell = shellMat.clone(); drainShell.uniforms = { uTime:fxTime, uAlpha:{ value:.45 } };
+  drainShell.fragmentShader = shellMat.fragmentShader.replace('mix(vec3(1.0, 0.32, 0.04), vec3(1.0, 0.86, 0.45), fr)', 'mix(vec3(0.1, 1.0, 0.35), vec3(0.75, 1.0, 0.8), fr)');
+  const drainCore = new THREE.MeshBasicMaterial({ color:0xd8ffe4 });
+  [rockMat, coreMat, shellMat, tailMat, outerMat, fireShell, fireTail, fireCore, drainShell, drainCore].forEach(m => m.userData.shared = true);
+  return { geo, rockMat, coreMat, shellMat, outerMat, tailMat, fireShell, fireTail, fireCore, drainShell, drainCore, tailGeo, dir, quat:new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir) };
 })();
 
 function makeMeteor(m){
@@ -1986,8 +2048,9 @@ function render3D(){
   // dynamic lights from fire and magic
   const cands = [];
   for (const p of state.projectiles){
-    if (p.type === 'fireball') cands.push({ x:p.x, y:30, z:p.y, c:0xff8a30, i:2.6 });
+    if (p.type === 'fireball') cands.push({ x:p.x, y:30, z:p.y, c:0xff8a30, i:1.6 });
     else if (p.type === 'homing') cands.push({ x:p.x, y:30, z:p.y, c:parseInt(p.owner.color.slice(1), 16), i:2 });
+    else if (p.type === 'drain' || p.type === 'drainBack') cands.push({ x:p.x, y:30, z:p.y, c:0x4dff85, i:1.3 });
   }
   for (const m of state.meteors){ const f = m.t/m.T; cands.push({ x:m.x + 220*f, y:30 + 700*f, z:m.y - 260*f, c:0xff6a20, i:3 + (1 - f)*4 }); }
   for (const fl of state.flashes) cands.push({ x:fl.x, y:fl.z, z:fl.y, c:fl.col, i:fl.i*(fl.t/fl.T) });

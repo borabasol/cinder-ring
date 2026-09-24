@@ -8,5 +8,5 @@ Inspired by the classic *Warlock* custom map for Warcraft III. Built with three.
 
 ## Controls
 - Right-click (or tap) the ground to move
-- Q W E R A S D F cast spells toward the cursor
+- Q W E R T A S D F cast spells toward the cursor
 - Esc pauses, M toggles sound
