@@ -430,32 +430,73 @@ const wellTex = canvasTex(256, (g, s) => {
 });
 
 const GROUND_R = 540;
+// Three canvases share every stone: colour, height (bump) and glow (lava seeping between stones + runes).
 function makeGround(){
-  const R = GROUND_R, s = 1.3, size = Math.ceil(2*R*s);
+  const R = GROUND_R, s = 1.6, size = Math.ceil(2*R*s);
   const mk = () => { const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); g.scale(s, s); g.translate(R, R); return [c, g]; };
-  const [c, g] = mk(), [rc, rg] = mk();
-  rg.fillStyle = '#000'; rg.fillRect(-R, -R, 2*R, 2*R);
-  g.fillStyle = '#140b08'; g.fillRect(-R, -R, 2*R, 2*R);
+  const [c, g] = mk(), [hc, hg] = mk(), [rc, rg] = mk();
+  const nz = document.createElement('canvas'); nz.width = nz.height = 128;
+  { const x = nz.getContext('2d'), im = x.createImageData(128, 128); for (let i = 0; i < im.data.length; i += 4){ const v = Math.random()*255; im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255; } x.putImageData(im, 0, 0); }
+  const grain = g.createPattern(nz, 'repeat');
+
+  g.fillStyle = '#110906'; g.fillRect(-R, -R, 2*R, 2*R);
+  hg.fillStyle = '#000'; hg.fillRect(-R, -R, 2*R, 2*R);
+  const eg = rg.createRadialGradient(0, 0, 0, 0, 0, R);
+  eg.addColorStop(0, 'rgb(22,5,0)'); eg.addColorStop(.72, 'rgb(60,13,2)'); eg.addColorStop(1, 'rgb(150,36,5)');
+  rg.fillStyle = eg; rg.fillRect(-R, -R, 2*R, 2*R);
+
+  const tones = [[62,54,50],[74,56,46],[44,38,36],[80,50,38],[56,52,52]];
   const hs = 30, hw = Math.sqrt(3)*hs, hh = 1.5*hs;
   const rows = Math.ceil(R/hh)+1, cols = Math.ceil(R/hw)+1;
   for (let row = -rows; row <= rows; row++) for (let col = -cols; col <= cols; col++){
     const cx = col*hw + (row & 1 ? hw/2 : 0) + rand(-4, 4), cy = row*hh + rand(-4, 4);
     if (hyp(cx, cy) > R + hs) continue;
-    const t = Math.random();
-    g.beginPath();
-    for (let k = 0; k < 6; k++){ const a = Math.PI/6 + k*TAU/6 + rand(-.09, .09), rr = hs*rand(.8, .93); const px = cx + Math.cos(a)*rr, py = cy + Math.sin(a)*rr; k ? g.lineTo(px, py) : g.moveTo(px, py); }
-    g.closePath();
+    const path = new Path2D();
+    for (let k = 0; k < 6; k++){ const a = Math.PI/6 + k*TAU/6 + rand(-.09, .09), rr = hs*rand(.82, .93); const px = cx + Math.cos(a)*rr, py = cy + Math.sin(a)*rr; k ? path.lineTo(px, py) : path.moveTo(px, py); }
+    path.closePath();
+    const base = tones[(Math.random()*tones.length)|0], v = rand(.85, 1.15);
     const sg = g.createLinearGradient(cx - hs, cy - hs, cx + hs, cy + hs);
-    sg.addColorStop(0, `rgb(${70+t*30},${58+t*22},${52+t*18})`); sg.addColorStop(1, `rgb(${40+t*20},${33+t*14},${30+t*12})`);
-    g.fillStyle = sg; g.fill();
+    sg.addColorStop(0, `rgb(${base[0]*v*1.22|0},${base[1]*v*1.22|0},${base[2]*v*1.22|0})`);
+    sg.addColorStop(1, `rgb(${base[0]*v*.72|0},${base[1]*v*.72|0},${base[2]*v*.72|0})`);
+    g.fillStyle = sg; g.fill(path);
+    g.save(); g.clip(path);
+    g.globalCompositeOperation = 'overlay'; g.globalAlpha = .22; g.fillStyle = grain; g.fillRect(cx - hs, cy - hs, hs*2, hs*2);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    for (let k = 0; k < 3; k++){
+      const bx = cx + rand(-hs, hs)*.6, by = cy + rand(-hs, hs)*.6, br = rand(6, 16), dark = Math.random() < .6;
+      const bg = g.createRadialGradient(bx, by, 0, bx, by, br);
+      bg.addColorStop(0, dark ? 'rgba(0,0,0,.22)' : 'rgba(255,230,200,.07)'); bg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = bg; g.fillRect(bx - br, by - br, br*2, br*2);
+    }
+    g.restore();
+    if (Math.random() < .55){
+      const a0 = Math.random()*TAU; let px = cx + Math.cos(a0)*hs*.85, py = cy + Math.sin(a0)*hs*.85;
+      const crack = [[px, py]], dir = a0 + Math.PI + rand(-.5, .5);
+      for (let k = 0; k < 4; k++){ px += Math.cos(dir + rand(-.6, .6))*rand(5, 10); py += Math.sin(dir + rand(-.6, .6))*rand(5, 10); crack.push([px, py]); }
+      const cp = new Path2D(); crack.forEach(([x, y], i) => i ? cp.lineTo(x, y) : cp.moveTo(x, y));
+      g.save(); g.clip(path); g.strokeStyle = 'rgba(10,5,3,.75)'; g.lineWidth = 1.1; g.stroke(cp); g.restore();
+      hg.save(); hg.clip(path); hg.strokeStyle = '#000'; hg.lineWidth = 1.8; hg.stroke(cp); hg.restore();
+    }
+    const bv = g.createLinearGradient(cx - hs, cy - hs, cx + hs, cy + hs);
+    bv.addColorStop(0, 'rgba(255,228,195,.24)'); bv.addColorStop(.5, 'rgba(255,228,195,0)'); bv.addColorStop(.5, 'rgba(0,0,0,0)'); bv.addColorStop(1, 'rgba(0,0,0,.5)');
+    g.lineWidth = 2.2; g.strokeStyle = bv; g.stroke(path);
+    const hv = 150 + Math.random()*70 | 0;
+    hg.fillStyle = `rgb(${hv},${hv},${hv})`; hg.fill(path);
+    hg.lineWidth = 5; hg.strokeStyle = 'rgba(0,0,0,.4)'; hg.stroke(path);
+    rg.fillStyle = '#000'; rg.fill(path);
   }
-  for (let i = 0; i < 7000; i++){
+  for (let i = 0; i < 9000; i++){
     const a = Math.random()*TAU, r = Math.sqrt(Math.random())*R;
-    g.fillStyle = Math.random() < .55 ? `rgba(0,0,0,${rand(.06,.18)})` : `rgba(255,220,190,${rand(.03,.08)})`;
-    g.fillRect(Math.cos(a)*r, Math.sin(a)*r, rand(1,2.2), rand(1,2.2));
+    g.fillStyle = Math.random() < .55 ? `rgba(0,0,0,${rand(.08,.2)})` : `rgba(255,220,190,${rand(.03,.09)})`;
+    g.fillRect(Math.cos(a)*r, Math.sin(a)*r, rand(.8,2), rand(.8,2));
   }
-  // rune seal, drawn faintly into the stone and brightly into the glow map
-  for (const [ctx2, col, lw] of [[g, 'rgba(255,150,70,.25)', 3], [rg, 'rgb(255,120,40)', 3]]){
+  for (let i = 0; i < 16; i++){
+    const a = Math.random()*TAU, r = rand(200, R - 40), x = Math.cos(a)*r, y = Math.sin(a)*r, br = rand(25, 70);
+    const sg = g.createRadialGradient(x, y, 0, x, y, br); sg.addColorStop(0, 'rgba(0,0,0,.4)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = sg; g.fillRect(x - br, y - br, br*2, br*2);
+  }
+  // rune seal: faint in the stone, engraved in the height map, bright in the glow map
+  for (const [ctx2, col, lw] of [[g, 'rgba(255,150,70,.28)', 3], [hg, 'rgba(0,0,0,.8)', 4], [rg, 'rgb(255,120,40)', 3]]){
     ctx2.strokeStyle = col; ctx2.lineWidth = lw;
     ctx2.beginPath(); ctx2.arc(0, 0, 150, 0, TAU); ctx2.stroke();
     ctx2.beginPath(); ctx2.arc(0, 0, 176, 0, TAU); ctx2.stroke();
@@ -467,33 +508,72 @@ function makeGround(){
       ctx2.stroke();
     }
   }
-  return [c, rc];
+  return [c, hc, rc];
 }
-const [groundCanvas, runeCanvas] = makeGround();
+const [groundCanvas, heightCanvas, runeCanvas] = makeGround();
 const groundTex = new THREE.CanvasTexture(groundCanvas);
 groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const heightTex = new THREE.CanvasTexture(heightCanvas);
 const runeTex = new THREE.CanvasTexture(runeCanvas);
 
+// Lava: noise is baked once into a tiling texture (R,G = two fbm fields, B = cell-edge distance for crust plates),
+// so the shader only does three texture reads per pixel instead of dozens of noise evaluations.
+function makeLavaNoise(size){
+  const data = new Uint8Array(size*size*4);
+  const layers = k => Array.from({ length:5 }, (_, o) => { const p = 4 << o, a = new Float32Array(p*p); for (let i = 0; i < a.length; i++) a[i] = Math.random(); return { p, a, amp:Math.pow(.5, o) }; });
+  const L1 = layers(), L2 = layers(); let norm = 0; L1.forEach(o => norm += o.amp);
+  const sm = t => t*t*(3 - 2*t);
+  const vn = (o, x, y) => {
+    const p = o.p, xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi);
+    const x0 = ((xi%p)+p)%p, y0 = ((yi%p)+p)%p, x1 = (x0+1)%p, y1 = (y0+1)%p;
+    const a = o.a[y0*p+x0], b = o.a[y0*p+x1], c2 = o.a[y1*p+x0], e = o.a[y1*p+x1];
+    const top = a + (b - a)*xf, bot = c2 + (e - c2)*xf; return top + (bot - top)*yf;
+  };
+  const fbm = (L, x, y) => { let v = 0; for (const o of L) v += o.amp*vn(o, x*o.p, y*o.p); return clamp((v/norm - .5)*1.9 + .5, 0, 1); };
+  const G = 7, jx = new Float32Array(G*G), jy = new Float32Array(G*G);
+  for (let i = 0; i < G*G; i++){ jx[i] = rand(.15, .85); jy[i] = rand(.15, .85); }
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++){
+    const u = x/size, v = y/size;
+    const fx = u*G, fy = v*G, cx = Math.floor(fx), cy = Math.floor(fy);
+    let f1 = 9, f2 = 9;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){
+      const gx = cx + dx, gy = cy + dy, gi = (((gy%G)+G)%G)*G + (((gx%G)+G)%G);
+      const d = hyp(gx + jx[gi] - fx, gy + jy[gi] - fy);
+      if (d < f1){ f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+    }
+    const i = (y*size + x)*4;
+    data[i] = fbm(L1, u, v)*255; data[i+1] = fbm(L2, u, v)*255; data[i+2] = clamp((f2 - f1)*1.6, 0, 1)*255; data[i+3] = 255;
+  }
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+  tex.needsUpdate = true;
+  return tex;
+}
 const lavaMat = new THREE.ShaderMaterial({
-  uniforms:{ uTime:{ value:0 }, uR:{ value:520 } },
+  uniforms:{ uTime:{ value:0 }, uR:{ value:520 }, uNoise:{ value:makeLavaNoise(512) } },
   vertexShader:`varying vec2 vP; void main(){ vec4 wp = modelMatrix * vec4(position, 1.0); vP = wp.xz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
   fragmentShader:`
-    uniform float uTime; uniform float uR; varying vec2 vP;
-    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
-      return mix(mix(h(i), h(i+vec2(1.0,0.0)), f.x), mix(h(i+vec2(0.0,1.0)), h(i+vec2(1.0,1.0)), f.x), f.y); }
-    float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 4; i++){ v += a*n(p); p = p*2.03 + vec2(1.7, 9.2); a *= 0.5; } return v; }
+    uniform float uTime; uniform float uR; uniform sampler2D uNoise; varying vec2 vP;
     void main(){
-      vec2 p = vP * 0.0055; float t = uTime;
-      vec2 q = vec2(fbm(p + vec2(t*0.05, t*0.03)), fbm(p + vec2(5.2, 1.3) - t*0.04));
-      float f = fbm(p*1.6 + q*2.2 + vec2(0.0, t*0.02));
-      float veins = pow(1.0 - abs(f*2.0 - 1.0), 5.0);
-      float crust = smoothstep(0.30, 0.58, q.x*0.55 + q.y*0.25 + f*0.2);
-      vec3 col = mix(vec3(0.78, 0.20, 0.03), vec3(0.075, 0.02, 0.012), crust*0.95);
-      col += vec3(1.0, 0.62, 0.22) * veins * (0.95 - crust*0.6);
+      float t = uTime;
+      vec2 uv = vP * 0.0014;
+      vec4 a = texture2D(uNoise, uv + vec2(t*0.006, t*0.004));
+      vec2 w = (a.rg - 0.5) * 0.10;
+      vec4 b = texture2D(uNoise, uv*2.3 + w + vec2(-t*0.011, t*0.007));
+      vec4 c = texture2D(uNoise, uv*0.9 + w*0.6 + vec2(t*0.003, -t*0.002));
+      float seam = 1.0 - smoothstep(0.015, 0.09, c.b);
+      float heat = b.r*0.55 + a.g*0.45;
+      float crust = smoothstep(0.44, 0.64, heat) * (1.0 - seam*0.9);
+      vec3 molten = mix(vec3(0.72, 0.15, 0.02), vec3(1.0, 0.56, 0.12), smoothstep(0.25, 0.8, b.g));
+      vec3 crustCol = mix(vec3(0.04, 0.014, 0.01), vec3(0.13, 0.042, 0.02), a.b);
+      vec3 col = mix(molten, crustCol, crust);
+      float veins = pow(1.0 - abs(b.r - 0.5)*2.0, 8.0);
+      col += vec3(1.0, 0.66, 0.26) * (seam*(0.2 + 0.45*a.r) + veins*0.3*(1.0 - crust)) * (1.0 - crust*0.5);
+      col *= 0.9 + 0.1*sin(t*1.5 + heat*9.0);
       float d = length(vP);
-      col += vec3(1.0, 0.38, 0.08) * exp(-max(d - uR, 0.0)/55.0) * 0.4;
-      col *= 0.9 + 0.1*sin(t*1.7 + f*6.0);
+      col += vec3(1.0, 0.4, 0.08) * exp(-max(d - uR, 0.0)/55.0) * 0.45;
       col *= 1.0 - smoothstep(1600.0, 3200.0, d)*0.6;
       gl_FragColor = vec4(col, 1.0);
     }`
@@ -501,7 +581,7 @@ const lavaMat = new THREE.ShaderMaterial({
 const lava = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), lavaMat);
 lava.rotation.x = -Math.PI/2; lava.position.y = LAVA_Y; scene.add(lava);
 
-const topMat = new THREE.MeshStandardMaterial({ map:groundTex, bumpMap:groundTex, bumpScale:2.4, emissiveMap:runeTex, emissive:new THREE.Color(1, .5, .2), emissiveIntensity:.9, roughness:.92, metalness:0 });
+const topMat = new THREE.MeshStandardMaterial({ map:groundTex, bumpMap:heightTex, bumpScale:3.2, emissiveMap:runeTex, emissive:new THREE.Color(1, .5, .2), emissiveIntensity:.9, roughness:.92, metalness:0 });
 const platformTop = new THREE.Mesh(new THREE.CircleGeometry(GROUND_R, 160), topMat);
 platformTop.rotation.x = -Math.PI/2; platformTop.receiveShadow = true; scene.add(platformTop);
 
@@ -573,15 +653,16 @@ const glowPts = makePoints(true), smokePts = makePoints(false);
 let composerReady = false;
 if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass){
   try {
-    composer = new THREE.EffectComposer(renderer);
+    const rt = new THREE.WebGLRenderTarget(2, 2, { samples:renderer.capabilities.isWebGL2 ? 4 : 0 });
+    composer = new THREE.EffectComposer(renderer, rt);
     composer.addPass(new THREE.RenderPass(scene, camera));
     composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(512, 512), .7, .45, .74));
     composerReady = true;
   } catch { composer = null; }
 }
 
-const PR_MAX = Math.min(1.5, window.devicePixelRatio || 1), PR_MIN = Math.min(PR_MAX, .6);
-let prScale = PR_MAX;
+const PR_MAX = Math.min(2, window.devicePixelRatio || 1), PR_MIN = Math.min(PR_MAX, .9);
+let prScale = Math.min(PR_MAX, 1.5);
 function resize(){
   W = gameEl.clientWidth; H = gameEl.clientHeight;
   PR = prScale;
@@ -1194,7 +1275,7 @@ function simulate(dt){
 
   for (const m of state.meteors){
     m.t -= dt;
-    { const f = m.t/m.T; if (f > .03) burst(m.x + 220*f, m.y - 260*f, 3, { col:[255,rand(100,170),40], sp:[5,40], life:[.3,.7], size:[3,7], z:16 + 700*f, vz:[0,40] }); }
+    { const f = m.t/m.T; if (f > .03) burst(m.x + 220*f + rand(-14,14), m.y - 260*f + rand(-14,14), 4, { col:[255,rand(100,190),40], sp:[10,60], life:[.35,.8], size:[4,9], z:22 + 700*f + rand(-14,14), vz:[20,90] }); }
     if (m.t <= 0){
       for (const w of ws){
         if (!w.alive) continue;
@@ -1700,16 +1781,80 @@ function updWell(gw, g){
   u.disk.rotation.y = -gw.spin*1.4;
   u.t1.rotation.set(gw.spin*1.3, gw.spin, 0); u.t2.rotation.set(-gw.spin*.8, 0, gw.spin*1.1);
 }
+// Meteor: displaced basalt rock with a molten core showing through its dips, wrapped in a flickering fire shell and trailing a flame tail.
+const fxTime = { value:0 };
+const METEOR = (() => {
+  const h3 = (x, y, z) => { const s = Math.sin(x*127.1 + y*311.7 + z*74.7)*43758.5453; return s - Math.floor(s); };
+  const vn3 = (x, y, z) => {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf), w = zf*zf*(3-2*zf);
+    const l = (a, b, k) => a + (b - a)*k;
+    return l(l(l(h3(xi,yi,zi), h3(xi+1,yi,zi), u), l(h3(xi,yi+1,zi), h3(xi+1,yi+1,zi), u), v),
+             l(l(h3(xi,yi,zi+1), h3(xi+1,yi,zi+1), u), l(h3(xi,yi+1,zi+1), h3(xi+1,yi+1,zi+1), u), v), w);
+  };
+  const geo = new THREE.IcosahedronGeometry(1, 3);
+  const pa = geo.attributes.position, col = new Float32Array(pa.count*3), p = new THREE.Vector3(), c = new THREE.Color();
+  for (let i = 0; i < pa.count; i++){
+    p.fromBufferAttribute(pa, i).normalize();
+    const n = vn3(p.x*2.1 + 5, p.y*2.1, p.z*2.1)*.6 + vn3(p.x*5.3, p.y*5.3 + 3, p.z*5.3)*.3 + vn3(p.x*11, p.y*11, p.z*11 + 7)*.1;
+    const r = .72 + n*.62;
+    p.multiplyScalar(r); pa.setXYZ(i, p.x, p.y, p.z);
+    c.setRGB(.09, .06, .05).lerp(new THREE.Color(.26, .19, .15), clamp((r - .82)/.4, 0, 1)); col.set([c.r, c.g, c.b], i*3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  const rockMat = new THREE.MeshStandardMaterial({ vertexColors:true, flatShading:true, roughness:.95, metalness:.05, emissive:0x1a0400 });
+  const coreMat = new THREE.MeshBasicMaterial({ color:0xff8a2a });
+  const shellMat = new THREE.ShaderMaterial({
+    uniforms:{ uTime:fxTime, uAlpha:{ value:1 } },
+    vertexShader:`varying vec3 vN; varying vec3 vV; varying vec3 vP;
+      void main(){ vP = position; vec4 mv = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`,
+    fragmentShader:`uniform float uTime; uniform float uAlpha; varying vec3 vN; varying vec3 vV; varying vec3 vP;
+      void main(){
+        float fr = pow(1.0 - abs(dot(vN, vV)), 1.6);
+        float fl = sin(vP.x*9.0 + uTime*11.0)*sin(vP.y*8.0 - uTime*14.0)*sin(vP.z*10.0 + uTime*9.0);
+        float band = fr*(1.0 - fr)*4.0;
+        float a = (band*0.9 + fr*0.15 + 0.08) * (0.6 + 0.4*fl);
+        vec3 col = mix(vec3(1.0, 0.32, 0.04), vec3(1.0, 0.86, 0.45), fr);
+        gl_FragColor = vec4(col, a*uAlpha);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  });
+  const tailMat = new THREE.ShaderMaterial({
+    uniforms:{ uTime:fxTime },
+    vertexShader:`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`uniform float uTime; varying vec2 vUv;
+      void main(){
+        float k = vUv.y;
+        float fl = 0.65 + 0.35*sin(vUv.x*43.98 + uTime*22.0 - k*12.0);
+        float a = pow(1.0 - k, 1.4) * fl;
+        vec3 col = mix(vec3(1.0, 0.85, 0.45), vec3(1.0, 0.22, 0.02), k);
+        gl_FragColor = vec4(col, a*0.45);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+  });
+  const tailGeo = new THREE.ConeGeometry(1, 1, 18, 1, true);
+  const dir = new THREE.Vector3(220, 700, -260).normalize();
+  const outerMat = shellMat.clone(); outerMat.uniforms = { uTime:fxTime, uAlpha:{ value:.28 } }; shellMat.uniforms.uAlpha.value = .5;
+  return { geo, rockMat, coreMat, shellMat, outerMat, tailMat, tailGeo, dir, quat:new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir) };
+})();
+
 function makeMeteor(m){
   const g = new THREE.Group();
   const fill = new THREE.Mesh(GEO.disk, additive(0xff3a10, .15)); fill.scale.set(m.rad, 1, m.rad); fill.position.set(m.x, 1.3, m.y);
   const ring = new THREE.Mesh(GEO.ring, additive(0xff7a30, .8)); ring.scale.set(m.rad, 1, m.rad); ring.position.set(m.x, 1.5, m.y);
   const prog = new THREE.Mesh(GEO.ring, additive(0xffc080, .9)); prog.position.set(m.x, 1.7, m.y);
   const rockG = new THREE.Group();
-  const rock = new THREE.Mesh(GEO.rock, new THREE.MeshStandardMaterial({ color:0x3a2620, emissive:0x992200, flatShading:true, roughness:1 }));
-  rock.scale.setScalar(17); rock.castShadow = true; rockG.add(rock, glow(0xff6a20, 130, .9));
+  const S = 22;
+  const rock = new THREE.Mesh(METEOR.geo, METEOR.rockMat); rock.scale.setScalar(S); rock.castShadow = true;
+  const core = new THREE.Mesh(GEO.sphere, METEOR.coreMat); rock.add(core); core.scale.setScalar(.97);
+  const shell = new THREE.Mesh(GEO.sphere, METEOR.shellMat); shell.scale.setScalar(S*1.28);
+  const halo = new THREE.Group(); halo.quaternion.copy(METEOR.quat);
+  const outer = new THREE.Mesh(GEO.sphere, METEOR.outerMat); outer.scale.set(S*1.6, S*2.2, S*1.6); outer.position.y = S*.5; halo.add(outer);
+  const tail = new THREE.Mesh(METEOR.tailGeo, METEOR.tailMat); tail.scale.set(S*.95, S*8, S*.95); tail.position.y = S*4.2; halo.add(tail);
+  rockG.add(rock, shell, halo, glow(0xff6a20, 170, .55));
   g.add(fill, ring, prog, rockG);
-  g.userData = { fill, ring, prog, rockG, rock };
+  g.userData = { fill, ring, prog, rockG, rock, spin:new THREE.Vector3(rand(-2, 2), rand(-2, 2), rand(-2, 2)) };
   return g;
 }
 function updMeteor(m, g){
@@ -1717,8 +1862,8 @@ function updMeteor(m, g){
   u.fill.material.opacity = .08 + k*.3;
   u.ring.material.opacity = .5 + .4*Math.sin(state.time*20);
   const pr = Math.max(.01, m.rad*k); u.prog.scale.set(pr, 1, pr);
-  u.rockG.position.set(m.x + 220*f, 16 + 700*f, m.y - 260*f);
-  u.rock.rotation.x += .1; u.rock.rotation.y += .07;
+  u.rockG.position.set(m.x + 220*f, 22 + 700*f, m.y - 260*f);
+  u.rock.rotation.x += u.spin.x*.016; u.rock.rotation.y += u.spin.y*.016; u.rock.rotation.z += u.spin.z*.016;
 }
 function makeRing(r){
   const m = new THREE.Mesh(GEO.ring, additive(new THREE.Color(`rgb(${r.col})`), 1));
@@ -1790,7 +1935,7 @@ function adaptQuality(dt){
   if (perf.t < 1) return;
   const avg = perf.acc/perf.n*1000; perf.acc = perf.n = perf.t = 0;
   if (document.hidden) return;
-  if (avg > 21 && prScale > PR_MIN){ prScale = Math.max(PR_MIN, prScale - .2); perf.calm = 0; resize(); }
+  if (avg > 24 && prScale > PR_MIN){ prScale = Math.max(PR_MIN, prScale - .15); perf.calm = 0; resize(); }
   else if (avg < 14 && prScale < PR_MAX){ if (++perf.calm >= 4){ prScale = Math.min(PR_MAX, prScale + .1); perf.calm = 0; resize(); } }
   else perf.calm = 0;
 }
@@ -1799,7 +1944,7 @@ function render3D(){
   if (rawDt < .5) adaptQuality(rawDt);
   camUpdate(dt);
   const A = state.arena, k = A.r / GROUND_R;
-  lavaMat.uniforms.uTime.value = state.time; lavaMat.uniforms.uR.value = A.r;
+  lavaMat.uniforms.uTime.value = state.time; lavaMat.uniforms.uR.value = A.r; fxTime.value = state.time;
   platformTop.scale.set(k, k, 1);
   groundTex.repeat.set(k, k); groundTex.offset.set((1-k)/2, (1-k)/2);
   platformSide.scale.set(k, 1, k);
