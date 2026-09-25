@@ -2122,15 +2122,27 @@ function castCmd(h, id, x, y){
 }
 
 /* --- connecting --- */
-const PEER_OPTS = { debug:0 };
+// PeerJS's bundled TURN relays (eu-0/us-0.turn.peerjs.com) no longer resolve, so bring our own ICE list.
+// STUN lets most home networks connect directly; players behind carrier NAT need a TURN relay (TURN_API below).
+const STUN = [{ urls:['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls:'stun:stun.cloudflare.com:3478' }];
+const TURN_API = '';   // e.g. a Metered credentials URL: https://<app>.metered.live/api/v1/turn/credentials?apiKey=<key>
+let iceCache = null;
+async function iceServers(){
+  if (iceCache) return iceCache;
+  let turn = [];
+  if (TURN_API){ try { const r = await fetch(TURN_API); if (r.ok) turn = await r.json(); } catch {} }
+  iceCache = STUN.concat(Array.isArray(turn) ? turn : []);
+  return iceCache;
+}
 const myName = () => (settings.name.trim() || 'Warlock').slice(0, 14);
 const MY_TOKEN = Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length:5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[(Math.random()*32)|0]).join('');
-function openPeer(id){
+async function openPeer(id){
+  const opts = { debug:0, config:{ iceServers:await iceServers() } };
   return new Promise((res, rej) => {
     if (typeof Peer === 'undefined') return rej(new Error('nolib'));
     let p;
-    try { p = id ? new Peer(id, PEER_OPTS) : new Peer(PEER_OPTS); } catch (e){ return rej(e); }
+    try { p = id ? new Peer(id, opts) : new Peer(opts); } catch (e){ return rej(e); }
     const tm = setTimeout(() => { p.off('error', onErr); try { p.destroy(); } catch {} rej(new Error('timeout')); }, 9000);
     function onErr(e){ clearTimeout(tm); p.off('open', onOpen); try { p.destroy(); } catch {} rej(e); }
     function onOpen(){
@@ -2149,10 +2161,11 @@ function tryConnect(peer, code, ms){
     let done = false;
     const conn = peer.connect(PFX + code, { reliable:true, serialization:'json' });
     const onErr = e => { if (e && e.type === 'peer-unavailable') finish(false, e); };
-    const tm = setTimeout(() => finish(false, new Error('timeout')), ms);
+    let opened = false;
+    const tm = setTimeout(() => finish(false, new Error(opened ? 'noreply' : 'blocked')), ms);
     function finish(ok, v){ if (done) return; done = true; clearTimeout(tm); peer.off('error', onErr); if (ok){ conn._ok = true; res(v); } else { try { conn.close(); } catch {} rej(v); } }
     peer.on('error', onErr);
-    conn.on('open', () => conn.send({ t:'hello', name:myName(), v:PROTO, tok:MY_TOKEN }));
+    conn.on('open', () => { opened = true; conn.send({ t:'hello', name:myName(), v:PROTO, tok:MY_TOKEN }); });
     conn.on('data', m => {
       NET.lastMsg = performance.now();
       if (!done){ if (m.t === 'welcome') finish(true, { conn, welcome:m }); else if (m.t === 'full') finish(false, new Error('full')); return; }
@@ -2180,7 +2193,9 @@ async function mpRun(label, fn){
   catch (e){
     note.classList.add('err');
     const t = e && (e.type || e.message);
-    note.innerHTML = t === 'peer-unavailable' || t === 'timeout' ? 'That room was not found. Check the code, or create a new room.'
+    note.innerHTML = t === 'peer-unavailable' ? 'That room was not found. Check the code, or create a new room.'
+      : t === 'blocked' ? 'The room exists, but a direct connection to its host failed. One of your networks (often mobile data) blocks peer-to-peer links. Try both on Wi-Fi.'
+      : t === 'noreply' ? 'Connected, but the host did not answer. Ask them to keep the game tab open and try again.'
       : t === 'full' ? 'That room is full or already playing.'
       : `Online play could not connect here. It runs on the public site: <a href="https://borabasol.github.io/cinder-ring/" target="_blank" rel="noopener">borabasol.github.io/cinder-ring</a>`;
   }
@@ -2209,7 +2224,7 @@ function quickMatch(){
   return mpRun('Looking for an open room…', async () => {
     const peer = await openPeer();
     for (let i = 0; i < 6; i++){
-      try { const j = await tryConnect(peer, 'QPUB' + i, 3500); becomeGuest(peer, 'QPUB' + i, j); return; } catch {}
+      try { const j = await tryConnect(peer, 'QPUB' + i, 6000); becomeGuest(peer, 'QPUB' + i, j); return; } catch {}
     }
     try { peer.destroy(); } catch {}
     for (let i = 0; i < 6; i++){
