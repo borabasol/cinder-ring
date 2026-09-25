@@ -1551,8 +1551,9 @@ function countdownTick(rdt){
   if (!state.demo && c !== state.lastCount && c > 0){ state.lastCount = c; banner(String(c), `Round ${state.round} of ${state.rounds}`, .9); sfx.tick(); }
   if (state.phaseT <= 0 && NET.role !== 'client'){ state.phase = 'fight'; if (!state.demo){ banner('Fight', '', .7); sfx.go(); } }
 }
-function frame(now){
-  const rdt = Math.min(.05, (now - last)/1000); last = now;
+function frame(now){ step(now, true); requestAnimationFrame(frame); }
+function step(now, draw){
+  const rdt = Math.min(.05, Math.max(0, (now - last)/1000)); last = now;
   state.time += rdt;
   if (!state.paused){
     if (state.phase === 'roundEnd') state.timeScale = Math.min(1, state.timeScale + rdt*.45);
@@ -1571,9 +1572,12 @@ function frame(now){
   }
   hudClock -= rdt;
   if (hudClock <= 0){ hudClock = .08; if (!state.demo && !$('hud').hidden) updateHud(); }
-  render3D();
-  requestAnimationFrame(frame);
+  if (draw) render3D();
 }
+try {
+  const tick = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 40)'], { type:'text/javascript' })));
+  tick.onmessage = () => { if (document.hidden && NET.role) step(performance.now(), false); };
+} catch {}
 
 /* ---------- camera + input ---------- */
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitPt = new THREE.Vector3();
@@ -1823,7 +1827,7 @@ const PROTO = 1, PFX = 'cinderring-v1-', SNAP_EVERY = 1/15, SHOP_SECS = 25;
 const PTYPES = ['fireball', 'homing', 'drain', 'drainBack', 'well'];
 const NET = { role:null, peer:null, hostConn:null, players:[], size:4, rounds:5, code:'', pub:false, myId:0,
   events:[], mute:0, seq:0, sendT:0, mvT:0, mvKey:'', ready:new Set(), shopUntil:0, byId:new Map(),
-  projs:new Map(), mets:new Map(), wells:new Map(), roster:null };
+  projs:new Map(), mets:new Map(), wells:new Map(), roster:null, dropped:new Map(), lastMsg:0, hbT:0 };
 const r1 = v => Math.round(v*10)/10;
 function rec(ev){ if (NET.role === 'host' && !NET.mute) NET.events.push(ev); }
 function addRing(r){ state.rings.push(r); rec(['r', r]); }
@@ -1914,19 +1918,38 @@ function onGuest(conn){
   conn.on('data', m => {
     if (!pl){
       if (!m || m.t !== 'hello') return;
+      const old = m.tok && NET.players.find(p => p.tok === m.tok);
+      if (old){ old.replaced = true; NET.players = NET.players.filter(p => p !== old); try { old.conn.close(); } catch {} if (!NET.inLobby) NET.dropped.set(m.tok, old.id); }
+      if (!NET.inLobby && m.tok && NET.dropped.has(m.tok)){ pl = rejoinGuest(conn, m); return; }
       const id = freeId();
       if (!NET.inLobby || NET.players.length >= NET.size || id < 0 || m.v !== PROTO){ conn.send({ t:'full' }); setTimeout(() => conn.close(), 300); return; }
-      pl = { id, name:String(m.name || 'Warlock').slice(0, 14), conn };
+      pl = { id, name:String(m.name || 'Warlock').slice(0, 14), conn, tok:m.tok, last:performance.now() };
       NET.players.push(pl);
       conn.send({ ...lobbyMsg(), t:'welcome', you:id, code:NET.code, pub:NET.pub });
       broadcast(lobbyMsg()); renderLobby(); sfx.coin();
       if (NET.players.length >= NET.size) setTimeout(() => { if (NET.inLobby && NET.players.length >= NET.size) startMP(false); }, 600);
       return;
     }
+    pl.last = performance.now();
     hostOnMsg(pl, m);
   });
-  conn.on('close', () => { if (pl) guestLeft(pl); });
+  conn.on('close', () => { if (pl && !pl.replaced) guestLeft(pl); });
   conn.on('error', () => {});
+}
+function rejoinGuest(conn, m){
+  const id = NET.dropped.get(m.tok); NET.dropped.delete(m.tok);
+  const w = NET.byId.get(id), r = NET.roster && NET.roster.find(x => x.id === id);
+  const pl = { id, name:r ? r.name : String(m.name || 'Warlock').slice(0, 14), conn, tok:m.tok, last:performance.now() };
+  NET.players.push(pl);
+  if (w){ w.remote = true; w.ai = null; w.name = pl.name; w.mx = null; }
+  const meta = state.warlocks.map(metaOf);
+  conn.send({ ...lobbyMsg(), t:'welcome', you:id, code:NET.code, pub:NET.pub, rejoin:true });
+  conn.send({ t:'start', rounds:state.rounds, players:NET.roster.map(r => ({ id:r.id, name:r.name, color:r.color })) });
+  if (state.phase === 'shop') conn.send({ t:'shop', round:state.round, secs:Math.max(3, Math.round((NET.shopUntil - performance.now())/1000)), meta });
+  else if (state.phase === 'matchEnd') conn.send({ t:'end', meta });
+  else conn.send({ t:'round', round:state.round, meta, pos:state.warlocks.map(w => [w.id, r1(w.x), r1(w.y), Math.round(w.facing*100)/100]) });
+  pushFeed(`<b style="color:${w ? w.color : '#fff'}">${esc(pl.name)}</b> reconnected`);
+  return pl;
 }
 function hostOnMsg(pl, m){
   const w = NET.byId.get(pl.id);
@@ -1941,7 +1964,8 @@ function guestLeft(pl){
   NET.players = NET.players.filter(p => p !== pl);
   if (NET.inLobby){ broadcast(lobbyMsg()); renderLobby(); return; }
   const w = NET.byId.get(pl.id);
-  if (w && w.remote){ w.remote = false; w.ai = { t:0, target:null, orbit:1 }; w.name += ' (bot)'; pushFeed(`<b style="color:${w.color}">${esc(pl.name)}</b> left, a bot takes over`); }
+  if (pl.tok) NET.dropped.set(pl.tok, pl.id);
+  if (w && w.remote){ w.remote = false; w.ai = { t:0, target:null, orbit:1 }; pushFeed(`<b style="color:${w.color}">${esc(pl.name)}</b> dropped, a bot plays until they reconnect`); }
   checkShopReady();
 }
 function startMP(fillBots){
@@ -1993,6 +2017,7 @@ function clientOnMsg(m){
       break;
     }
     case 'end': applyMeta(m.meta); matchEnd(); break;
+    case 'bye': NET.bye = true; break;
   }
 }
 function applySnap(s){
@@ -2058,12 +2083,21 @@ function clientStep(rdt, dt){
 }
 function netTick(rdt){
   if (NET.role === 'host'){
+    NET.hbT -= rdt;
+    if (NET.hbT <= 0){
+      NET.hbT = 2; broadcast({ t:'hb' });
+      const now = performance.now();
+      for (const p of NET.players) if (p.conn && now - (p.last || now) > 9000){ try { p.conn.close(); } catch {} }  // silent guest: hand their warlock to a bot
+    }
     if (['countdown', 'fight', 'roundEnd'].includes(state.phase)){
       NET.sendT -= rdt;
       if (NET.sendT <= 0){ NET.sendT = SNAP_EVERY; broadcast(snapshot()); }
     } else NET.events = [];
     if (state.phase === 'shop') checkShopReady();
   } else if (NET.role === 'client'){
+    NET.hbT -= rdt;
+    if (NET.hbT <= 0){ NET.hbT = 2; sendHost({ t:'hb' }); }
+    if (NET.hostConn && !NET.rejoining && performance.now() - NET.lastMsg > 7000){ try { NET.hostConn.close(); } catch {} hostGone(); }
     NET.mvT -= rdt;
     if (NET.mvT <= 0){
       NET.mvT = .06;
@@ -2090,15 +2124,24 @@ function castCmd(h, id, x, y){
 /* --- connecting --- */
 const PEER_OPTS = { debug:0 };
 const myName = () => (settings.name.trim() || 'Warlock').slice(0, 14);
+const MY_TOKEN = Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length:5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[(Math.random()*32)|0]).join('');
 function openPeer(id){
   return new Promise((res, rej) => {
     if (typeof Peer === 'undefined') return rej(new Error('nolib'));
     let p;
     try { p = id ? new Peer(id, PEER_OPTS) : new Peer(PEER_OPTS); } catch (e){ return rej(e); }
-    const tm = setTimeout(() => { try { p.destroy(); } catch {} rej(new Error('timeout')); }, 9000);
-    p.once('open', () => { clearTimeout(tm); res(p); });
-    p.once('error', e => { clearTimeout(tm); try { p.destroy(); } catch {} rej(e); });
+    const tm = setTimeout(() => { p.off('error', onErr); try { p.destroy(); } catch {} rej(new Error('timeout')); }, 9000);
+    function onErr(e){ clearTimeout(tm); p.off('open', onOpen); try { p.destroy(); } catch {} rej(e); }
+    function onOpen(){
+      clearTimeout(tm); p.off('error', onErr);
+      // after opening, errors are informational; broker drops are healed by reconnecting (data channels stay up)
+      p.on('error', e => { NET.lastErr = e && e.type; });
+      p.on('disconnected', () => { setTimeout(() => { try { if (!p.destroyed) p.reconnect(); } catch {} }, 1000); });
+      res(p);
+    }
+    p.once('open', onOpen);
+    p.once('error', onErr);
   });
 }
 function tryConnect(peer, code, ms){
@@ -2109,23 +2152,23 @@ function tryConnect(peer, code, ms){
     const tm = setTimeout(() => finish(false, new Error('timeout')), ms);
     function finish(ok, v){ if (done) return; done = true; clearTimeout(tm); peer.off('error', onErr); if (ok){ conn._ok = true; res(v); } else { try { conn.close(); } catch {} rej(v); } }
     peer.on('error', onErr);
-    conn.on('open', () => conn.send({ t:'hello', name:myName(), v:PROTO }));
+    conn.on('open', () => conn.send({ t:'hello', name:myName(), v:PROTO, tok:MY_TOKEN }));
     conn.on('data', m => {
+      NET.lastMsg = performance.now();
       if (!done){ if (m.t === 'welcome') finish(true, { conn, welcome:m }); else if (m.t === 'full') finish(false, new Error('full')); return; }
-      clientOnMsg(m);
+      if (conn === NET.hostConn) clientOnMsg(m);
     });
-    conn.on('close', () => { if (conn._ok && NET.role === 'client') hostGone(); });
+    conn.on('close', () => { if (conn._ok && NET.role === 'client' && conn === NET.hostConn) hostGone(); });
   });
 }
 function becomeHost(peer, code, pub, size){
-  Object.assign(NET, { role:'host', peer, code, pub, size, rounds:settings.rounds, myId:0, players:[{ id:0, name:myName(), conn:null }], events:[], ready:new Set() });
+  Object.assign(NET, { role:'host', peer, code, pub, size, rounds:settings.rounds, myId:0, players:[{ id:0, name:myName(), conn:null }], events:[], ready:new Set(), dropped:new Map(), hbT:0 });
   peer.on('connection', onGuest);
-  peer.on('disconnected', () => { try { peer.reconnect(); } catch {} });
   NET.inLobby = true;
   showLobby();
 }
 function becomeGuest(peer, code, j){
-  Object.assign(NET, { role:'client', peer, code, pub:!!j.welcome.pub, hostConn:j.conn, myId:j.welcome.you, players:j.welcome.players, size:j.welcome.size });
+  Object.assign(NET, { role:'client', peer, code, pub:!!j.welcome.pub, hostConn:j.conn, myId:j.welcome.you, players:j.welcome.players, size:j.welcome.size, bye:false, rejoining:false, lastMsg:performance.now(), hbT:0 });
   NET.inLobby = true;
   showLobby();
 }
@@ -2180,16 +2223,41 @@ function netShutdown(){
   const was = NET.role;
   if (was === 'host') broadcast({ t:'bye' });
   try { NET.peer && NET.peer.destroy(); } catch {}
-  Object.assign(NET, { role:null, peer:null, hostConn:null, players:[], events:[], ready:new Set(), roster:null, inLobby:false });
+  Object.assign(NET, { role:null, peer:null, hostConn:null, players:[], events:[], ready:new Set(), roster:null, inLobby:false, rejoining:false, dropped:new Map() });
   NET.projs.clear(); NET.mets.clear(); NET.wells.clear();
 }
 function hostGone(){
+  if (NET.rejoining || NET.role !== 'client') return;
+  if (NET.bye) return showLost('The host left', 'The player who opened this room closed it.');
+  if (NET.inLobby) return showLost('Lost the room', 'The connection to the room dropped before the match started.');
+  tryRejoin();
+}
+async function tryRejoin(){
+  NET.rejoining = true;
+  const code = NET.code, oldConn = NET.hostConn; NET.hostConn = null;
+  try { oldConn && oldConn.close(); } catch {}
+  try { NET.peer && NET.peer.destroy(); } catch {}
+  banner('Connection lost', 'Reconnecting…', 5);
+  for (let i = 0; i < 6 && NET.role === 'client'; i++){
+    let peer = null;
+    try {
+      peer = await openPeer();
+      const j = await tryConnect(peer, code, 7000);
+      Object.assign(NET, { peer, hostConn:j.conn, myId:j.welcome.you, lastMsg:performance.now(), rejoining:false });
+      banner('Reconnected', '', 1.2);
+      return;
+    } catch (e){ try { peer && peer.destroy(); } catch {} await new Promise(r => setTimeout(r, 1500)); }
+  }
+  NET.rejoining = false;
+  if (NET.role === 'client') showLost('Connection lost', 'Could not reach the room again. The host may have left or the network dropped.');
+}
+function showLost(title, why){
   netShutdown();
   ['lobby', 'shop', 'pause'].forEach(id => $(id).hidden = true);
   $('hud').hidden = true;
   state.phase = 'matchEnd';
-  $('endTitle').textContent = 'The host left';
-  $('endStand').innerHTML = '';
+  $('endTitle').textContent = title;
+  $('endStand').innerHTML = `<li class="empty" style="grid-template-columns:1fr"><span>${esc(why)}</span></li>`;
   $('btnRematch').hidden = true; $('btnMenu').textContent = 'Back to menu';
   $('end').hidden = false;
 }
