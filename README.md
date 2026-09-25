@@ -15,7 +15,8 @@ Peer-to-peer over WebRTC. The room creator's browser runs the match. Signaling (
 
 ## Controls (desktop)
 - Right-click (or tap) the ground to move
-- Q W E R T A S D F cast spells toward the cursor
+- Q W E R T · A S D F G · Z X C V cast the 14 spells toward the cursor
+- 1–6 use inventory items
 - Esc pauses, M toggles sound
 
 ## Controls (phone)

@@ -196,6 +196,35 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
 .slot .lv i{width:4px;height:4px;background:var(--ember);transform:rotate(45deg)}
 .slot .cd{position:absolute;inset:0;background:conic-gradient(rgba(8,5,4,.8) calc(var(--p,0)*360deg),transparent 0)}
 .slot .cdt{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:16px;color:var(--ink);text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
+/* Warcraft-style inventory slots (HUD + shop) */
+.hud-row{display:flex;gap:10px;align-items:flex-end;justify-content:center;flex-wrap:wrap}
+#inv{display:grid;grid-template-columns:repeat(3,38px);gap:3px;pointer-events:auto}
+.inv{position:relative;width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:2px;border:2px solid #7a6440;background:linear-gradient(160deg,#241913,#0e0908);box-shadow:inset 0 0 0 1px #000,inset 0 2px 0 rgba(255,220,160,.15),0 1px 0 rgba(0,0,0,.6);color:#f0cf8e;overflow:hidden}
+.inv svg{width:24px;height:24px;position:relative}
+.inv .ii{display:grid;place-items:center}
+.inv .k{position:absolute;top:0;left:2px;font-size:10px;font-weight:700;color:var(--ink);text-shadow:0 1px 2px #000;z-index:1}
+.inv .cd{position:absolute;inset:0;background:conic-gradient(rgba(8,5,4,.8) calc(var(--p,0)*360deg),transparent 0)}
+.inv .cdt{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--ink);text-shadow:0 1px 3px #000}
+.inv.passive{border-color:#5d6a7a;color:#c8d6e8}
+.inv.empty{border-color:#4a3d2a;background:#120c0a}
+.inv.locked{border-color:#2a211c;background:repeating-linear-gradient(45deg,#120c0a 0 4px,#19110e 4px 8px);color:#4b3d34}
+.inv-grid{display:grid;grid-template-columns:repeat(6,44px);gap:6px;margin-bottom:4px}
+.inv-grid .inv{width:44px;height:44px}
+.inv-grid .inv.next{border:2px dashed var(--ember);color:var(--ember)}
+.inv-grid .inv.next:hover:not(:disabled){background:#2a1510}
+.inv-grid .inv .price{font-size:11px;font-weight:700}
+.inv-grid button.inv:disabled{opacity:.5;cursor:default}
+.inv-grid .inv .sell{position:absolute;inset:auto 0 0;font-size:9px;text-transform:uppercase;letter-spacing:.08em;background:rgba(0,0,0,.65);color:var(--ash);opacity:0;transition:opacity .15s}
+.inv-grid button.inv:hover .sell,.inv-grid button.inv:focus-visible .sell{opacity:1}
+.item-list{display:grid;gap:6px}
+.item-card{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:6px 8px;color:var(--ink)}
+.item-card:hover:not(:disabled){border-color:var(--lava);background:#241711}
+.item-card:disabled{opacity:.5;cursor:default}
+.item-card.owned{opacity:.7;border-color:#5a3322}
+.item-card .it-body{display:grid;gap:1px;min-width:0}
+.item-card b{font-size:14px;font-weight:600}
+.item-card small{font-size:12px;color:var(--ash);line-height:1.3}
+.item-card .it-price{font-weight:700;color:var(--ember);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .slot.locked{color:#4b3a33;border-color:var(--line);background:#120c0b}
 .slot.locked .k{color:var(--dim)}
 .slot.armed{border-color:var(--ember);box-shadow:0 0 0 2px var(--ember),0 0 18px rgba(255,150,60,.5)}
@@ -227,6 +256,8 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
 .tb.cancel{border-color:var(--bad);filter:grayscale(.6)}
 .tb .cd{position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(8,5,4,.8) calc(var(--p,0)*360deg),transparent 0)}
 .tb .cdt{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:18px;color:var(--ink);text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
+#game.touch #inv{grid-template-columns:repeat(6,34px)}
+#game.touch .inv{width:34px;height:34px}
 #game.touch #bar,#game.touch #feed,#game.touch .aim-hint,#game.touch #hBoard{display:none}
 #game.touch .hud-top{top:calc(8px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));right:calc(10px + env(safe-area-inset-right,0px))}
 #game.touch .hud-left{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
@@ -290,7 +321,7 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
     </div>
     <div class="hud-bottom">
       <div class="vitals"><div class="hp"><i id="hHpFill"></i><span id="hHpText">100</span></div><span class="gold" id="hGold">0g</span></div>
-      <div id="bar"></div>
+      <div class="hud-row"><div id="bar"></div><div id="inv" aria-label="Inventory"></div></div>
     </div>
   </div>
 
@@ -329,7 +360,7 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
         <dl>
           <dt class="t-only">Phone</dt><dd class="t-only">Drag the left stick to walk. Tap Fireball to shoot where your warlock faces (follow the arrow). Tap any other spell to fire it at the nearest rival, or drag it to aim and let go to cast. Drag back to the button to cancel.</dd>
           <dt>Move</dt><dd>Right-click (or tap) the ground. Hold right-click to steer.</dd>
-          <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
+          <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd>, <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd>, <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd>. Items: <kbd>1</kbd>–<kbd>6</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
           <dt>Lava</dt><dd>Burns 14 HP a second. The lower your HP, the farther every hit throws you.</dd>
           <dt>Ring</dt><dd>Crumbles every 12 seconds. Fireballs cancel each other out in mid-air.</dd>
           <dt>Gold</dt><dd>Earned by surviving, killing and dealing damage. Spend it between rounds.</dd>
@@ -348,7 +379,8 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
       <div class="shop-grid">
         <div><h3>Spellbook</h3><div id="shopSpells" class="cards"></div></div>
         <aside>
-          <h3>Relics</h3><div id="shopItems" class="cards items"></div>
+          <h3>Inventory</h3><div id="shopInv" class="inv-grid"></div>
+          <h3 style="margin-top:16px">Items</h3><div id="shopItems" class="item-list"></div>
           <h3 style="margin-top:18px">Standings</h3><ol id="shopStand" class="stand"></ol>
           <p class="earn" id="shopEarn"></p>
         </aside>
@@ -407,25 +439,45 @@ const SP = {
     desc:'Slow orb that hunts the nearest rival. You can shoot it down.' },
   meteor:   { key:'R', name:'Meteor', cost:[120,100,130], cd:[14,12,10], dmg:[14,17,20], kb:[620,680,740], range:430, rad:[70,78,86], delay:1.0,
     desc:'Lands after one second with huge knockback. It hits you too.' },
+  drain:    { key:'T', name:'Soul Drain', cost:[90,80,110], cd:[9,8,7], dmg:[8,10,12], kb:[220,240,260], heal:[14,18,22], speed:400, life:1.5,
+    desc:'A green orb of stolen life. If it hits, it flies back to you and heals you.' },
   thrust:   { key:'A', name:'Thrust', cost:[70,70,100], cd:[9,8,7], dmg:[7,9,11], kb:[560,600,640], dist:[240,270,300],
     desc:'Dash forward. Slam into a rival to launch them.' },
   shield:   { key:'S', name:'Mirror Ward', cost:[80,70,100], cd:[12,10,8], dur:[1.0,1.25,1.5],
     desc:'Briefly reflect projectiles at their caster and block Lightning.' },
   blink:    { key:'D', name:'Blink', cost:[70,70,100], cd:[11,9,7], range:[260,300,340],
     desc:'Teleport a short distance. Your way back from the lava edge.' },
-  drain:    { key:'T', name:'Soul Drain', cost:[90,80,110], cd:[9,8,7], dmg:[8,10,12], kb:[220,240,260], heal:[14,18,22], speed:400, life:1.5,
-    desc:'A green orb of stolen life. If it hits, it flies back to you and heals you.' },
   gravity:  { key:'F', name:'Gravity Well', cost:[110,90,120], cd:[16,14,12], pull:[520,620,720], rad:[190,200,210], dur:[2.4,2.8,3.2], range:420,
-    desc:'A singularity that drags rivals toward it. Place it beyond them, over the lava.' },
+    desc:'A singularity that drags rivals and missiles toward it. Pair it with Fire Spray.' },
+  scourge:  { key:'G', name:'Scourge', cost:[0,70,100], cd:[6,5.5,5], dmg:[9,11,13], kb:[520,560,600], rad:[150,160,170], delay:1.0,
+    desc:'After one second, a blast bursts out around you. Rivals closest to you fly farthest.' },
+  invis:    { key:'Z', name:'Invisibility', cost:[80,80,110], cd:[14,13,12], dur:[2,2.5,3], dmg:[8,10,12], kb:[500,530,560], haste:.7,
+    desc:'Vanish and move fast. Run into a rival to strike them; casting ends it.' },
+  bouncer:  { key:'X', name:'Bouncer', cost:[100,90,120], cd:[10,9,8], dmg:[6,7,8], inc:.25, kb:[240,260,280], speed:520, bounces:[4,5,6], seek:560, life:1.4,
+    desc:'Ricochets from rival to rival, each hit 0.25 stronger. With no one near, it bounces back to you harmlessly.' },
+  firespray:{ key:'C', name:'Fire Spray', cost:[90,80,110], cd:[9,8,7], balls:[6,7,8], spread:.9, dmg:[3,3.5,4], kb:[150,165,180], speed:540, life:.85,
+    desc:'A fan of small fireballs. A Gravity Well sucks them in and keeps them swirling.' },
+  swap:     { key:'V', name:'Swap', cost:[80,70,100], cd:[12,11,10], speed:[480,580,680], range:[420,500,580],
+    desc:'A bolt that trades places with the first rival it hits. Levels add range and speed.' },
 };
-const ORDER = ['fireball','lightning','homing','meteor','drain','thrust','shield','blink','gravity'];
+const ORDER = ['fireball','lightning','homing','meteor','drain','thrust','shield','blink','gravity','scourge','invis','bouncer','firespray','swap'];
 const KEYMAP = {}; ORDER.forEach(id => KEYMAP[SP[id].key] = id);
+// Shop items modelled on the WC3 Warlock map's shop. Each sits in one of six inventory slots bought separately.
 const ITEMS = {
-  boots: { name:'Emberwalk Boots', cost:[50,70,90], desc:'+12% move speed per level' },
-  cloak: { name:'Anchor Cloak', cost:[60,80,100], desc:'−12% knockback taken per level' },
-  charm: { name:'Salamander Charm', cost:[50,60,80], desc:'−25% lava damage per level' },
-  orb:   { name:'Hourglass Orb', cost:[70,90,110], desc:'−8% spell cooldowns per level' },
+  speed:    { name:'Boots of Speed', cost:60, kind:'passive', desc:'+15% movement speed.' },
+  endurance:{ name:'Boots of Endurance', cost:70, kind:'passive', desc:'+20 maximum health, from the next round.' },
+  helm:     { name:'Helm of Protection', cost:80, kind:'passive', desc:'Take 20% less knockback.' },
+  cape:     { name:'Cape', cost:50, kind:'passive', desc:'Lava burns you 35% less.' },
+  cursed:   { name:'Cloak of the Cursed', cost:70, kind:'passive', desc:'Lava burns you 60% less, but you take 15% more knockback.' },
+  mask:     { name:'Mask of Death', cost:90, kind:'passive', desc:'Heal for 25% of the damage you deal.' },
+  haste:    { name:'Boots of Haste', cost:60, kind:'active', cd:18, desc:'Use: +60% movement speed for 3 seconds.' },
+  staff:    { name:'Staff of Fireball', cost:80, kind:'active', cd:8, desc:'Use: hurl an extra Fireball toward your aim.' },
+  aegis:    { name:'Aegis', cost:100, kind:'active', cd:22, desc:'Use: a Mirror Ward for 1.5 seconds.' },
+  treads:   { name:'Lava Treads', cost:70, kind:'active', cd:25, desc:'Use: immune to lava for 4 seconds and heal 10.' },
+  watch:    { name:'Pocket Watch', cost:100, kind:'active', cd:30, desc:'Use: spell cooldowns run twice as fast for 5 seconds.' },
+  clarity:  { name:'Clarity Potion', cost:30, kind:'charge', desc:'Use once: heal 30 over 5 seconds.' },
 };
+const SLOT_COST = [20, 30, 40, 50, 60, 70];
 const DIFF = {
   apprentice:{ label:'Apprentice', aim:.34, react:.44, dodge:.3, agg:.45 },
   adept:     { label:'Adept', aim:.16, react:.27, dodge:.62, agg:.75 },
@@ -445,12 +497,26 @@ const ICON = {
   blink:    S('<circle cx="5" cy="18" r="2"/><circle cx="18.5" cy="6.5" r="3" fill="currentColor" fill-opacity=".25"/><path d="M7 16C10 9 12.5 7.5 15.5 7.3" stroke-dasharray="1.6 2.6"/>'),
   drain:    S('<circle cx="8" cy="12" r="4.2" fill="currentColor" fill-opacity=".25"/><path d="M12.5 9.5C15 7 19 7.5 20.5 10.5M20.5 10.5l.4-3.2M20.5 10.5l-3.2-.2M12.5 14.5C15 17 19 16.5 20.5 13.5"/>'),
   gravity:  S('<circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="6" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="10" stroke-dasharray="2 4"/>'),
-  boots:    S('<path d="M7 3v10l-3 4v3h15v-2c0-2-2-3-5-3.5L11 13V3z"/>'),
-  cloak:    S('<path d="M12 3c-3 0-5 2-5 5L4 21h16L17 8c0-3-2-5-5-5z"/><path d="M12 8v13"/>'),
-  charm:    S('<path d="M12 3c3 4 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z" fill="currentColor" fill-opacity=".2"/>'),
-  orb:      S('<path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9"/>'),
+  scourge:  S('<circle cx="12" cy="12" r="3.4" fill="currentColor" fill-opacity=".35"/><circle cx="12" cy="12" r="9" stroke-dasharray="2.5 2.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>'),
+  invis:    S('<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z" stroke-dasharray="2.4 2"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20 20 4"/>'),
+  bouncer:  S('<circle cx="4.5" cy="18" r="2.3" fill="currentColor" fill-opacity=".35"/><circle cx="12" cy="5.5" r="2.3"/><circle cx="19.5" cy="17" r="2.3"/><path d="M5.8 16 10.7 7.6M13.4 7.6 18.2 15"/>'),
+  firespray:S('<path d="M3 12h2.5" /><circle cx="12" cy="5.5" r="1.8" fill="currentColor"/><circle cx="16" cy="9" r="1.8" fill="currentColor"/><circle cx="16.5" cy="15" r="1.8" fill="currentColor"/><circle cx="12" cy="18.5" r="1.8" fill="currentColor"/><circle cx="20.5" cy="12" r="1.8" fill="currentColor"/><path d="M5.5 12 10.5 6.5M5.5 12l5 5.5" stroke-dasharray="1.5 2"/>'),
+  swap:     S('<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>'),
+  speed:    S('<path d="M8 3v9l-3 4v3h13v-2c0-2-2-3-4.5-3.5L12 12V3z" fill="currentColor" fill-opacity=".2"/><path d="M2 8h3M1 11h3"/>'),
+  endurance:S('<path d="M8 3v9l-3 4v3h13v-2c0-2-2-3-4.5-3.5L12 12V3z" fill="currentColor" fill-opacity=".2"/><path d="M19 3v6M16 6h6"/>'),
+  helm:     S('<path d="M4 15a8 8 0 0 1 16 0v3H4z" fill="currentColor" fill-opacity=".2"/><path d="M12 7v11M4 18h16M8 13h2M14 13h2"/>'),
+  cape:     S('<path d="M8 3h8l3 18-7-3-7 3z" fill="currentColor" fill-opacity=".2"/><path d="M8 3c1 2 7 2 8 0"/>'),
+  cursed:   S('<path d="M8 3h8l3 18-7-3-7 3z" fill="currentColor" fill-opacity=".2"/><circle cx="10.3" cy="10" r="1.2" fill="currentColor"/><circle cx="13.7" cy="10" r="1.2" fill="currentColor"/><path d="M10.5 13.5h3"/>'),
+  mask:     S('<path d="M4 5c5-2 11-2 16 0 0 8-3 14-8 16C7 19 4 13 4 5z" fill="currentColor" fill-opacity=".2"/><path d="M8 10.5h2.5M13.5 10.5H16M10 16c1.3.8 2.7.8 4 0"/>'),
+  haste:    S('<path d="M9 3v9l-3 4v3h13v-2c0-2-2-3-4.5-3.5L13 12V3z" fill="currentColor" fill-opacity=".2"/><path d="M1 13h4M2 16h3M1 19h3" stroke-dasharray="2 1.5"/>'),
+  staff:    S('<path d="M6 21 16 8"/><circle cx="17.5" cy="6" r="3.3" fill="currentColor" fill-opacity=".35"/><path d="M17.5 1.5v2M22 6h-2"/>'),
+  aegis:    S('<circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity=".15"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v18M3 12h18" stroke-opacity=".5"/>'),
+  treads:   S('<path d="M8 3v9l-3 4v3h13v-2c0-2-2-3-4.5-3.5L12 12V3z"/><path d="M4 22c1-1.5 2-1.5 3 0s2 1.5 3 0 2-1.5 3 0 2 1.5 3 0" />'),
+  watch:    S('<circle cx="12" cy="13.5" r="7.5" fill="currentColor" fill-opacity=".15"/><path d="M12 13.5V9.5M12 13.5l3 2M10 3h4M12 3v3"/>'),
+  clarity:  S('<path d="M9.5 3h5M10.5 3v5L6 16a4.5 4.5 0 0 0 4 6h4a4.5 4.5 0 0 0 4-6l-4.5-8V3"/><path d="M7.5 15h9" /><path d="M8 17c2 1 6 1 8 0" stroke-opacity=".6"/>'),
 };
 const ROMAN = ['','I','II','III'];
+
 
 /* ---------- 3D scene ---------- */
 const cv = $('cv');
@@ -657,14 +723,39 @@ const lavaMat = new THREE.ShaderMaterial({
 const lava = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), lavaMat);
 lava.rotation.x = -Math.PI/2; lava.position.y = LAVA_Y; scene.add(lava);
 
+
+const GEO = {
+  ring: new THREE.RingGeometry(.86, 1, 72).rotateX(-Math.PI/2),
+  thin: new THREE.RingGeometry(.985, 1, 128).rotateX(-Math.PI/2),
+  disk: new THREE.CircleGeometry(1, 64).rotateX(-Math.PI/2),
+  sphere: new THREE.SphereGeometry(1, 18, 14),
+  torus: new THREE.TorusGeometry(1, .05, 6, 56),
+  rock: new THREE.DodecahedronGeometry(1, 0),
+  circle: new THREE.BufferGeometry().setFromPoints(Array.from({ length:129 }, (_, i) => new THREE.Vector3(Math.cos(i/128*TAU), 0, Math.sin(i/128*TAU)))),
+};
+const additive = (color, opacity = 1, extra = {}) => new THREE.MeshBasicMaterial(Object.assign({ color, transparent:true, opacity, depthWrite:false, blending:THREE.AdditiveBlending }, extra));
+function glow(color, size, opacity = 1){
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity }));
+  s.scale.set(size, size, 1); return s;
+}
+
+// Arena surface: every piece (top, masonry wall, rim, heat glow, curb) follows edgeR(θ), so warped shrinks just work.
+const EDGE_N = 240, edgeBuf = new Float32Array(EDGE_N + 1);
+function dynGeo(verts, idx, extra){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts*3), 3).setUsage(THREE.DynamicDrawUsage));
+  for (const [name, size] of extra) g.setAttribute(name, new THREE.BufferAttribute(new Float32Array(verts*size), size).setUsage(THREE.DynamicDrawUsage));
+  g.setIndex(idx); return g;
+}
+// top: a triangle fan, UVs in world units so the stone tile never stretches
+const topGeo = (() => { const idx = []; for (let i = 1; i <= EDGE_N; i++) idx.push(0, i + 1, i); const g = dynGeo(EDGE_N + 2, idx, [['uv', 2], ['normal', 3]]); const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return g; })();
 const topMat = new THREE.MeshStandardMaterial({ map:groundTex, bumpMap:heightTex, bumpScale:3.2, emissiveMap:runeTex, emissive:new THREE.Color(1, .5, .2), emissiveIntensity:.8, roughness:.92, metalness:0 });
-const platformTop = new THREE.Mesh(new THREE.CircleGeometry(1, 220), topMat);
-platformTop.rotation.x = -Math.PI/2; platformTop.receiveShadow = true; scene.add(platformTop);
+const platformTop = new THREE.Mesh(topGeo, topMat);
+platformTop.receiveShadow = true; platformTop.frustumCulled = false; scene.add(platformTop);
 const seal = new THREE.Mesh(new THREE.CircleGeometry(200, 64).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ map:sealTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
 seal.position.y = .45; scene.add(seal);
-const sideGeo = new THREE.CylinderGeometry(1, .9, 110, 200, 5, true);
-{ const pa = sideGeo.attributes.position; for (let i = 0; i < pa.count; i++){ if (pa.getY(i) > 54) continue; const k = rand(.985, 1.012); pa.setX(i, pa.getX(i)*k); pa.setZ(i, pa.getZ(i)*k); } sideGeo.computeVertexNormals(); }
-// masonry wall texture for the platform's side (brick courses, mortar glowing where the lava licks it)
+// masonry wall: four rings (ground, just above lava, lava line, deep) with the lower courses lit by the lava
+const WALL_Y = [0, -14, -30, -110], WALL_K = [1, .995, .98, .9], WALL_HOT = [0, .25, 1, 1];
 const BRICK_W = 256, BRICK_H = 64;
 const wallTex = (() => {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
@@ -685,44 +776,43 @@ const wallTex = (() => {
   const t1 = new THREE.CanvasTexture(c); t1.wrapS = t1.wrapT = THREE.RepeatWrapping; t1.anisotropy = 4;
   return t1;
 })();
-// lower courses glow where the lava licks the wall (vertex colours)
-{ const pa = sideGeo.attributes.position, col = new Float32Array(pa.count*3);
-  for (let i = 0; i < pa.count; i++){ const y = pa.getY(i) - 55; const hot = clamp((-y - 14)/30, 0, 1); col.set([1 + hot*1.6, 1 + hot*.5, 1], i*3); }
-  sideGeo.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
-const sideMat = new THREE.MeshStandardMaterial({ map:wallTex, bumpMap:wallTex, bumpScale:2.5, vertexColors:true, emissive:0x160400, roughness:.95 });
-const platformSide = new THREE.Mesh(sideGeo, sideMat);
-platformSide.position.y = -55; platformSide.receiveShadow = true; scene.add(platformSide);
-
-const GEO = {
-  ring: new THREE.RingGeometry(.86, 1, 72).rotateX(-Math.PI/2),
-  thin: new THREE.RingGeometry(.985, 1, 128).rotateX(-Math.PI/2),
-  disk: new THREE.CircleGeometry(1, 64).rotateX(-Math.PI/2),
-  sphere: new THREE.SphereGeometry(1, 18, 14),
-  torus: new THREE.TorusGeometry(1, .05, 6, 56),
-  rock: new THREE.DodecahedronGeometry(1, 0),
-  circle: new THREE.BufferGeometry().setFromPoints(Array.from({ length:129 }, (_, i) => new THREE.Vector3(Math.cos(i/128*TAU), 0, Math.sin(i/128*TAU)))),
-};
-const additive = (color, opacity = 1, extra = {}) => new THREE.MeshBasicMaterial(Object.assign({ color, transparent:true, opacity, depthWrite:false, blending:THREE.AdditiveBlending }, extra));
-function glow(color, size, opacity = 1){
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity }));
-  s.scale.set(size, size, 1); return s;
-}
-
-// rim: a fixed-width glowing band at the lava edge, rebuilt only when the radius changes
-const RIM_N = 256, rimGeo = new THREE.BufferGeometry();
-rimGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((RIM_N + 1)*2*3), 3).setUsage(THREE.DynamicDrawUsage));
-{ const idx = []; for (let i = 0; i < RIM_N; i++){ const a = i*2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } rimGeo.setIndex(idx); }
-let rimR = -1;
-function setRim(r){
-  if (Math.abs(r - rimR) < .5) return; rimR = r;
-  const pa = rimGeo.attributes.position;
-  for (let i = 0; i <= RIM_N; i++){ const a = i/RIM_N*TAU, c = Math.cos(a), s2 = Math.sin(a); pa.setXYZ(i*2, c*(r - 5), .7, s2*(r - 5)); pa.setXYZ(i*2 + 1, c*(r + 1.5), .7, s2*(r + 1.5)); }
-  pa.needsUpdate = true; rimGeo.computeBoundingSphere();
-}
+const wallJit = Array.from({ length:(EDGE_N + 1)*4 }, (_, i) => i < (EDGE_N + 1) ? 1 : rand(.985, 1.012));
+const sideGeo = (() => {
+  const idx = [], R = EDGE_N + 1;
+  for (let k = 0; k < 3; k++) for (let i = 0; i < EDGE_N; i++){ const a = k*R + i, b = a + 1, c = a + R, d = c + 1; idx.push(a, b, c, b, d, c); }
+  const g = dynGeo(R*4, idx, [['uv', 2], ['color', 3]]);
+  const col = g.attributes.color;
+  for (let k = 0; k < 4; k++) for (let i = 0; i < R; i++){ const h = WALL_HOT[k]; col.setXYZ(k*R + i, 1 + h*1.6, 1 + h*.5, 1); }
+  return g;
+})();
+const platformSide = new THREE.Mesh(sideGeo, new THREE.MeshStandardMaterial({ map:wallTex, bumpMap:wallTex, bumpScale:2.5, vertexColors:true, emissive:0x160400, roughness:.95 }));
+platformSide.receiveShadow = true; platformSide.frustumCulled = false; scene.add(platformSide);
+const stripGeo = () => { const idx = []; for (let i = 0; i < EDGE_N; i++){ const a = i*2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } return dynGeo((EDGE_N + 1)*2, idx, [['color', 3]]); };
+const rimGeo = stripGeo(), heatGeo = stripGeo();
 const rim = new THREE.Mesh(rimGeo, new THREE.MeshBasicMaterial({ color:0xffa050, side:THREE.DoubleSide }));
 rim.frustumCulled = false; scene.add(rim);
-const heat = new THREE.Mesh(GEO.disk, new THREE.MeshBasicMaterial({ map:heatTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
-heat.position.y = .5; scene.add(heat);
+{ const c = heatGeo.attributes.color; for (let i = 0; i <= EDGE_N; i++){ c.setXYZ(i*2, 0, 0, 0); c.setXYZ(i*2 + 1, .55, .25, .07); } }
+const heat = new THREE.Mesh(heatGeo, new THREE.MeshBasicMaterial({ vertexColors:true, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
+heat.frustumCulled = false; scene.add(heat);
+let arenaSig = '';
+function updateArenaGeo(){
+  const A = state.arena, sig = `${A.count}|${A.k.toFixed(4)}|${A.r0}|${state.round}|${A.to.R}`;
+  if (sig === arenaSig) return; arenaSig = sig;
+  for (let i = 0; i <= EDGE_N; i++) edgeBuf[i] = edgeR(i/EDGE_N*TAU);
+  const tp = topGeo.attributes.position, tu = topGeo.attributes.uv;
+  tp.setXYZ(0, 0, 0, 0); tu.setXY(0, 0, 0);
+  const sp = sideGeo.attributes.position, su = sideGeo.attributes.uv, R1 = EDGE_N + 1, uRep = Math.max(1, Math.round(TAU*A.r/BRICK_W));
+  const rp = rimGeo.attributes.position, hp = heatGeo.attributes.position;
+  for (let i = 0; i <= EDGE_N; i++){
+    const th = i/EDGE_N*TAU, c = Math.cos(th), s = Math.sin(th), r = edgeBuf[i];
+    tp.setXYZ(i + 1, c*r, 0, s*r); tu.setXY(i + 1, c*r/TILE_W, s*r/TILE_H);
+    for (let k = 0; k < 4; k++){ const rr = r*WALL_K[k]*wallJit[k*R1 + i]; sp.setXYZ(k*R1 + i, c*rr, WALL_Y[k], s*rr); su.setXY(k*R1 + i, i/EDGE_N*uRep, (WALL_Y[k] + 110)/BRICK_H); }
+    rp.setXYZ(i*2, c*(r - 5), .7, s*(r - 5)); rp.setXYZ(i*2 + 1, c*(r + 1.5), .7, s*(r + 1.5));
+    hp.setXYZ(i*2, c*Math.max(0, r - 75), .5, s*Math.max(0, r - 75)); hp.setXYZ(i*2 + 1, c*r, .5, s*r);
+  }
+  for (const a of [tp, tu, sp, su, rp, hp]) a.needsUpdate = true;
+  sideGeo.computeVertexNormals();
+}
 const CURB_MAX = 360;
 const curbTex = canvasTex(128, (g, n) => {
   g.fillStyle = '#6a5a50'; g.fillRect(0, 0, n, n);
@@ -733,31 +823,43 @@ const curbTex = canvasTex(128, (g, n) => {
 });
 const curb = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ map:curbTex, bumpMap:curbTex, bumpScale:1.5, roughness:.9, color:0xb8a898 }), CURB_MAX);
 curb.castShadow = curb.receiveShadow = true; curb.count = 0; curb.frustumCulled = false; scene.add(curb);
-const curbState = { r:-1, rise:1 }, _o3 = new THREE.Object3D(), _cc = new THREE.Color();
+const curbState = { sig:'', rise:1 }, _o3 = new THREE.Object3D(), _cc = new THREE.Color();
 const hash1 = i => { const x = Math.sin(i*127.1 + 311.7)*43758.5453; return x - Math.floor(x); };
-function layoutCurb(r){
-  const n = Math.min(CURB_MAX, Math.floor(TAU*r/32));
+function layoutCurb(){
+  const A = state.arena, n = Math.min(CURB_MAX, Math.floor(TAU*A.r/32));
   for (let i = 0; i < n; i++){
-    const a = i/n*TAU, merlon = i % 7 === 0, broken = hash1(i*3.1) < .12;
-    const w = merlon ? 20 : TAU*r/n - 3, h = (merlon ? 18 + hash1(i)*8 : 6 + hash1(i)*2.5)*(broken ? .5 : 1), d = merlon ? 16 : 12;
-    _o3.position.set(Math.cos(a)*(r - 7), h/2 - 1.5, Math.sin(a)*(r - 7));
-    _o3.rotation.set((hash1(i*7.7) - .5)*.08, -a - Math.PI/2 + (hash1(i*5.3) - .5)*.06, (hash1(i*2.9) - .5)*(broken ? .3 : .06));
+    const th = i/n*TAU, r = edgeR(th), r2 = edgeR(th + .002);
+    const x = Math.cos(th)*r, z = Math.sin(th)*r, tx = Math.cos(th + .002)*r2 - x, tz = Math.sin(th + .002)*r2 - z;
+    const inx = -Math.cos(th), inz = -Math.sin(th), merlon = i % 7 === 0, broken = hash1(i*3.1) < .12;
+    const w = merlon ? 20 : TAU*A.r/n - 3, h = (merlon ? 18 + hash1(i)*8 : 6 + hash1(i)*2.5)*(broken ? .5 : 1), d = merlon ? 16 : 12;
+    _o3.position.set(x + inx*7, h/2 - 1.5, z + inz*7);
+    _o3.rotation.set((hash1(i*7.7) - .5)*.08, Math.atan2(-tz, tx) + (hash1(i*5.3) - .5)*.06, (hash1(i*2.9) - .5)*(broken ? .3 : .06));
     _o3.scale.set(w, h, d); _o3.updateMatrix(); curb.setMatrixAt(i, _o3.matrix);
     const t = .75 + hash1(i*9.1)*.35; curb.setColorAt(i, _cc.setRGB(t, t*.95, t*.9));
   }
   curb.count = n; curb.instanceMatrix.needsUpdate = true; if (curb.instanceColor) curb.instanceColor.needsUpdate = true;
-  curbState.r = r;
 }
-// while the ring shrinks the old curb sinks away (its stones tumble into the lava as debris); once stable, it rises at the new edge
+// the old curb sinks while the ring moves; once the edge settles, the stones rise along the new edge
 function updateCurb(A, dt){
-  const shrinking = A.r > A.target + .5;
-  curbState.rise = clamp(curbState.rise + (shrinking ? -dt*5 : dt*1.4), 0, 1);
-  if (curbState.rise <= .01 || curbState.r < 0) layoutCurb(A.r);
-  else if (!shrinking && Math.abs(curbState.r - A.r) > .5) layoutCurb(A.r);
+  const sig = `${A.count}|${A.r0}|${state.round}|${A.to.R}`;
+  if (A.k >= 1 && sig !== curbState.sig && curbState.rise <= .02){ layoutCurb(); curbState.sig = sig; }
+  const sinking = A.k < 1 || sig !== curbState.sig;
+  curbState.rise = clamp(curbState.rise + (sinking ? -dt*5 : dt*1.4), 0, 1);
   curb.position.y = (1 - curbState.rise)*-30;
 }
-const crumbleRing = new THREE.LineLoop(GEO.circle, new THREE.LineBasicMaterial({ color:0xff7a40, transparent:true, opacity:.6 }));
-crumbleRing.position.y = 1; crumbleRing.visible = false; scene.add(crumbleRing);
+// preview of the next edge, shown in the last seconds before a shrink
+const previewGeo = new THREE.BufferGeometry();
+previewGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((EDGE_N + 1)*3), 3).setUsage(THREE.DynamicDrawUsage));
+const crumbleRing = new THREE.Line(previewGeo, new THREE.LineBasicMaterial({ color:0xff7a40, transparent:true, opacity:.6 }));
+crumbleRing.position.y = 1; crumbleRing.visible = false; crumbleRing.frustumCulled = false; scene.add(crumbleRing);
+let previewSig = '';
+function updatePreview(sh){
+  const sig = JSON.stringify(sh); if (sig === previewSig) return; previewSig = sig;
+  const p = previewGeo.attributes.position;
+  for (let i = 0; i <= EDGE_N; i++){ const th = i/EDGE_N*TAU, r = shapeR(sh, th); p.setXYZ(i, Math.cos(th)*r, 0, Math.sin(th)*r); }
+  p.needsUpdate = true;
+}
+
 
 // basalt spires rising from the lava around the ring (moved out when the arena is larger)
 const spires = [];
@@ -865,6 +967,7 @@ const sfx = {
   tick(){ AU.tone('square', 660, 660, .08, .06); },
   go(){ AU.tone('square', 880, 1320, .18, .08); },
   coin(){ AU.tone('square', 990, 1480, .1, .06); },
+  scourge(){ AU.tone('sawtooth', 70, 220, 1, .09); AU.noise(1, 300, 1200, 1.5, .08, 'bandpass'); },
   drain(){ AU.tone('sine', 520, 260, .35, .14); AU.noise(.3, 1800, 900, 2, .08, 'bandpass'); },
   heal(){ AU.tone('sine', 660, 990, .25, .12); AU.tone('triangle', 990, 1320, .3, .06); },
 };
@@ -875,7 +978,8 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem('cinder-ring-setti
 const state = {
   phase:'title', demo:true, paused:false, time:0, t:0, round:0, rounds:5, diff:'adept',
   warlocks:[], projectiles:[], meteors:[], wells:[], particles:[], bolts:[], texts:[], rings:[], flashes:[], deaths:[], feed:[],
-  arena:{ r:1040, r0:1040, target:1040, next:12, min:300, step:106 },
+  arena:{ r:1040, r0:1040, target:1040, next:12, min:300, step:106, count:0, circR:1040, k:1, from:{ R:1040, h:[] }, to:{ R:1040, h:[] }, up:null, n:4 },
+  map:{ pits:[], trees:[] }, scourges:[],
   shake:0, timeScale:1, fast:false, human:null, cursor:{x:0,y:0}, armed:null, phaseT:0, lastCount:0,
   cam:{ viewR:600, fx:0, fy:0, snap:true, follow:null, switchAt:0 },
   mouse:{ x:0, y:0 }, hasMouse:false, rmb:false,
@@ -890,7 +994,8 @@ function rgbOf(hex){ const n=parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>
 function makeWarlock(i, name, color, human){
   return { id:i, name, color, rgb:rgbOf(color), dark:shade(color,.34), human,
     x:0,y:0,px:0,py:0,vx:0,vy:0,evx:0,evy:0,mx:null,my:null,r:16,hp:100,maxHp:100,alive:true,facing:0,
-    spells:{fireball:1}, cd:{}, cdMax:{}, items:{boots:0,cloak:0,charm:0,orb:0},
+    spells:{fireball:1, scourge:1}, cd:{}, cdMax:{}, inv:{ slots:0, items:[null,null,null,null,null,null], icd:[0,0,0,0,0,0], icdMax:[1,1,1,1,1,1] },
+    hasteT:0, treadsT:0, watchT:0, invisT:0, clarityT:0,
     gold:90, points:0, kills:0, roundKills:0, roundDmg:0, roundsWon:0, lastGain:0,
     shieldT:0, dash:null, lastHit:null, flash:0,
     ai: human ? null : { t:rand(0,.4), target:null, orbit:Math.random()<.5?1:-1 } };
@@ -901,7 +1006,9 @@ function makeWarlock(i, name, color, human){
 function arenaFor(n){
   const r0 = Math.round(520*clamp(1.5 + .25*(n - 2), 1.5, 2.75));
   const min = Math.round(Math.max(170, r0*.3));
-  return { r:r0, r0, target:r0, next:12, min, step:(r0 - min)/7 };
+  const A = { r:r0, r0, target:r0, next:12, min, step:(r0 - min)/7, count:0, circR:r0, k:1, from:circleShape(r0), to:circleShape(r0), up:null, n:Math.max(2, n) };
+  A.up = nextShape(A);
+  return A;
 }
 function newMatch(demo, roster){
   state.demo = demo; state.paused = false; state.fast = false;
@@ -940,10 +1047,13 @@ function startRound(){
   state.arena = arenaFor(state.demo ? 4 : state.warlocks.length);
   state.projectiles = []; state.meteors = []; state.wells = []; state.bolts = []; state.texts = []; state.rings = []; state.flashes = []; state.deaths = [];
   const n = state.warlocks.length, off = Math.random()*TAU;
+  if (NET.role !== 'client') state.map = genMap(n, state.arena.r0, off);
+  state.scourges = [];
   state.warlocks.forEach((w,i) => {
+    w.maxHp = 100 + (hasItem(w, 'endurance') ? 20 : 0); w.inv.icd = [0,0,0,0,0,0];
     const a = off + i*TAU/n;
     Object.assign(w, { x:Math.cos(a)*state.arena.r0*.55, y:Math.sin(a)*state.arena.r0*.55, vx:0, vy:0, evx:0, evy:0, mx:null, my:null,
-      hp:w.maxHp, alive:true, shieldT:0, dash:null, lastHit:null, flash:0, roundKills:0, roundDmg:0, cd:{}, cdMax:{}, facing:a+Math.PI });
+      hp:w.maxHp, alive:true, shieldT:0, hasteT:0, treadsT:0, watchT:0, invisT:0, clarityT:0, dash:null, lastHit:null, flash:0, roundKills:0, roundDmg:0, cd:{}, cdMax:{}, facing:a+Math.PI });
     w.px = w.x; w.py = w.y;
   });
   state.cam.snap = true;
@@ -954,7 +1064,7 @@ function startRound(){
   state.armed = null;
   state.timeScale = 1;
   if (!state.demo){ $('hud').hidden = false; $('btnFast').hidden = true; $('btnPause').hidden = !!NET.role; state.fast = false; $('btnFast').setAttribute('aria-pressed','false'); }
-  if (NET.role === 'host') broadcast({ t:'round', round:state.round, meta:state.warlocks.map(metaOf), pos:state.warlocks.map(w => [w.id, r1(w.x), r1(w.y), Math.round(w.facing*100)/100]) });
+  if (NET.role === 'host') broadcast({ t:'round', round:state.round, map:state.map, meta:state.warlocks.map(metaOf), pos:state.warlocks.map(w => [w.id, r1(w.x), r1(w.y), Math.round(w.facing*100)/100]) });
 }
 
 function endRound(winner){
@@ -994,7 +1104,7 @@ function openShop(){
   $('btnReady').textContent = `Enter round ${state.round+1}`;
   const h = state.human;
   $('shopEarn').innerHTML = state.round === 0
-    ? 'You start with a Fireball and <b>90 gold</b>. Blink is a strong first buy.'
+    ? 'You start with Fireball, Scourge and <b>90 gold</b>. Blink is a strong first buy; an inventory slot costs 20.'
     : `You earned <b>${h.lastGain} gold</b> last round: ${ordinal(h.lastPlace||1)} place, ${h.roundKills} kill${h.roundKills===1?'':'s'}, ${Math.round(h.roundDmg)} damage dealt.`;
   $('btnReady').disabled = false;
   renderShop();
@@ -1053,38 +1163,60 @@ function renderShop(){
       <button type="button" id="buy-${id}" data-buy="spell:${id}" class="${maxed?'maxed':''}" ${maxed||h.gold<cost?'disabled':''}>${label}</button>
     </div>`;
   }).join('');
+  const inv = h.inv;
+  $('shopInv').innerHTML = [0,1,2,3,4,5].map(i => {
+    if (i >= inv.slots){
+      const next = i === inv.slots, cost = SLOT_COST[inv.slots];
+      return next ? `<button type="button" class="inv locked next" id="buy-slot" data-buy="slot:${i}" ${h.gold < cost ? 'disabled' : ''} title="Unlock this slot for ${cost} gold"><span class="price">${cost}g</span></button>`
+                  : '<span class="inv locked" title="Unlock the slots before this one first"></span>';
+    }
+    const id = inv.items[i];
+    return id ? `<button type="button" class="inv" id="sell-${i}" data-buy="sell:${i}" title="Sell ${ITEMS[id].name} for ${Math.floor(ITEMS[id].cost/2)} gold">${ICON[id]}<span class="sell">Sell</span></button>`
+              : '<span class="inv empty" title="Empty slot"></span>';
+  }).join('');
+  const free = inv.items.some((x, j) => j < inv.slots && !x);
   $('shopItems').innerHTML = Object.keys(ITEMS).map(id => {
-    const it = ITEMS[id], lv = h.items[id], maxed = lv >= 3, cost = maxed ? 0 : it.cost[lv];
-    return `<div class="card ${lv?'owned':'locked'}">
-      <div class="card-head"><span class="ic">${ICON[id]}</span><div><h4>${it.name}</h4><span class="sub">${it.desc}</span></div><span class="pips">${pips(lv)}</span></div>
-      <button type="button" id="buy-${id}" data-buy="item:${id}" class="${maxed?'maxed':''}" ${maxed||h.gold<cost?'disabled':''}>${maxed?'Fully attuned':`${lv?'Upgrade':'Buy'} · ${cost}g`}</button>
-    </div>`;
+    const it = ITEMS[id], owned = it.kind !== 'charge' && inv.items.includes(id), can = !owned && free && h.gold >= it.cost;
+    const tag = owned ? 'Owned' : !inv.slots ? 'Needs a slot' : !free ? 'No free slot' : `${it.cost}g`;
+    return `<button type="button" class="item-card${owned ? ' owned' : ''}" id="buy-${id}" data-buy="item:${id}" ${can ? '' : 'disabled'}>
+      <span class="inv">${ICON[id]}</span><span class="it-body"><b>${it.name}</b><small>${it.desc}</small></span><span class="it-price">${tag}</span></button>`;
   }).join('');
   $('shopStand').innerHTML = standRows(standings());
 }
 function buy(w, kind, id){
   if (kind === 'spell'){
-    const lv = w.spells[id] || 0; if (lv >= 3) return false;
+    const lv = w.spells[id] || 0; if (!SP[id] || lv >= 3) return false;
     const c = SP[id].cost[lv]; if (w.gold < c) return false;
     w.gold -= c; w.spells[id] = lv+1; return true;
   }
-  const lv = w.items[id]; if (lv >= 3) return false;
-  const c = ITEMS[id].cost[lv]; if (w.gold < c) return false;
-  w.gold -= c; w.items[id] = lv+1; return true;
+  const inv = w.inv;
+  if (kind === 'slot'){
+    if (inv.slots >= 6 || w.gold < SLOT_COST[inv.slots]) return false;
+    w.gold -= SLOT_COST[inv.slots]; inv.slots++; return true;
+  }
+  if (kind === 'sell'){
+    const i = +id, it = ITEMS[inv.items[i]]; if (!it) return false;
+    w.gold += Math.floor(it.cost/2); inv.items[i] = null; return true;
+  }
+  const it = ITEMS[id]; if (!it || w.gold < it.cost) return false;
+  if (it.kind !== 'charge' && inv.items.includes(id)) return false;
+  const i = inv.items.findIndex((x, j) => j < inv.slots && !x); if (i < 0) return false;
+  w.gold -= it.cost; inv.items[i] = id; return true;
 }
 function botShop(w){
-  const firstPick = { blink:6, lightning:4, homing:3, drain:3, shield:3, thrust:3, meteor:2.5, gravity:2 };
-  for (let guard=0; guard<14; guard++){
+  const firstPick = { blink:6, lightning:4, homing:3, drain:3, shield:3, thrust:3, meteor:2.5, gravity:2, bouncer:3, firespray:3, swap:2, invis:2 };
+  const itemPick = { speed:2, cape:2, helm:1.6, clarity:1.4, haste:1.4, aegis:1.2, treads:1.2, staff:1, mask:1, endurance:1, watch:.8, cursed:.6 };
+  for (let guard=0; guard<16; guard++){
     const opts = [];
     for (const id of ORDER){
       const lv = w.spells[id] || 0; if (lv >= 3) continue;
       const c = SP[id].cost[lv]; if (c > w.gold) continue;
-      opts.push({ kind:'spell', id, wt: lv===0 ? firstPick[id] : (id==='fireball'?2.2:1.2) });
+      opts.push({ kind:'spell', id, wt: lv===0 ? firstPick[id] : (id==='fireball' || id==='scourge' ? 2 : 1.1) });
     }
-    for (const id in ITEMS){
-      const lv = w.items[id]; if (lv >= 3) continue;
-      if (ITEMS[id].cost[lv] > w.gold) continue;
-      opts.push({ kind:'item', id, wt: .9 });
+    if (w.inv.slots < 6 && SLOT_COST[w.inv.slots] <= w.gold) opts.push({ kind:'slot', id:0, wt: w.inv.slots < 2 ? 3 : w.inv.slots < 4 ? 1.2 : .4 });
+    if (w.inv.items.some((x, j) => j < w.inv.slots && !x)) for (const id in ITEMS){
+      const it = ITEMS[id]; if (it.cost > w.gold || (it.kind !== 'charge' && w.inv.items.includes(id))) continue;
+      opts.push({ kind:'item', id, wt:itemPick[id] || 1 });
     }
     if (!opts.length || Math.random() < .06) break;
     let tot = 0; opts.forEach(o => tot += o.wt);
@@ -1096,7 +1228,7 @@ function botShop(w){
 $('shop').addEventListener('click', e => {
   const b = e.target.closest('[data-buy]'); if (!b || b.disabled) return;
   const [kind, id] = b.dataset.buy.split(':');
-  if (buy(state.human, kind, id)){ AU.init(); sfx.coin(); if (NET.role === 'client') sendHost({ t:'buy', k:kind, id }); renderShop(); const nb = $('buy-'+id); if (nb && !nb.disabled) nb.focus({preventScroll:true}); }
+  if (buy(state.human, kind, id)){ AU.init(); sfx.coin(); if (NET.role === 'client') sendHost({ t:'buy', k:kind, id }); renderShop(); const nb = $(kind === 'slot' ? 'buy-slot' : 'buy-'+id); if (nb && !nb.disabled) nb.focus({preventScroll:true}); }
 });
 $('btnReady').addEventListener('click', () => {
   AU.init();
@@ -1112,21 +1244,39 @@ $('btnShopQuit').addEventListener('click', toMenu);
 /* ---------- spells ---------- */
 function nearestEnemy(owner, x, y){
   let best = null, bd = 1e9;
-  for (const o of state.warlocks){ if (!o.alive || o === owner) continue; const d = hyp(o.x-x, o.y-y); if (d < bd){ bd = d; best = o; } }
+  for (const o of state.warlocks){ if (!o.alive || o === owner || o.invisT > 0) continue; const d = hyp(o.x-x, o.y-y); if (d < bd){ bd = d; best = o; } }
   return best;
 }
 function tryCast(w, id, tx, ty){
   const lv = w.spells[id]; if (!lv || !w.alive || state.phase !== 'fight' || w.dash) return false;
   if ((w.cd[id]||0) > 0) return false;
   const s = SP[id], L = lv-1;
+  if (id !== 'invis') w.invisT = 0;   // casting reveals you
   let dx = tx-w.x, dy = ty-w.y, d = hyp(dx,dy);
   if (d < 1){ dx = Math.cos(w.facing); dy = Math.sin(w.facing); d = 1; }
   const nx = dx/d, ny = dy/d;
   if (id !== 'shield') w.facing = Math.atan2(ny, nx);
   switch (id){
-    case 'fireball':
-      addProj({ type:'fireball', owner:w, x:w.x+nx*22, y:w.y+ny*22, vx:nx*s.speed, vy:ny*s.speed, r:9, life:s.life, dmg:s.dmg[L], kb:s.kb[L] });
+    case 'fireball': makeFireball(w, nx, ny, L); sfx.fire(); break;
+    case 'scourge':
+      state.scourges.push({ id:++NET.seq, owner:w, t:s.delay, T:s.delay, rad:s.rad[L], dmg:s.dmg[L], kb:s.kb[L] });
+      sfx.scourge(); break;
+    case 'invis':
+      w.invisT = s.dur[L]; burst(w.x, w.y, 22, { col:[150,200,255], sp:[20,100], life:[.3,.7], size:[2,4] }); sfx.blink(); break;
+    case 'bouncer':
+      addProj({ type:'bouncer', owner:w, x:w.x+nx*24, y:w.y+ny*24, vx:nx*s.speed, vy:ny*s.speed, r:10, life:s.life, dmg:s.dmg[L], kb:s.kb[L], hits:0, maxB:s.bounces[L], target:null, skip:null, spin:0, sp0:s.speed });
+      sfx.orb(); break;
+    case 'firespray': {
+      const n = s.balls[L], base = Math.atan2(ny, nx);
+      for (let i = 0; i < n; i++){
+        const a = base + s.spread*(i/(n - 1) - .5) + rand(-.03, .03);
+        addProj({ type:'spray', owner:w, x:w.x+Math.cos(a)*22, y:w.y+Math.sin(a)*22, vx:Math.cos(a)*s.speed, vy:Math.sin(a)*s.speed, r:6, life:s.life*rand(.9, 1.1), dmg:s.dmg[L], kb:s.kb[L], sp0:s.speed });
+      }
       sfx.fire(); break;
+    }
+    case 'swap':
+      addProj({ type:'swap', owner:w, x:w.x+nx*24, y:w.y+ny*24, vx:nx*s.speed[L], vy:ny*s.speed[L], r:10, life:s.range[L]/s.speed[L], dmg:0, kb:0, spin:0, sp0:s.speed[L] });
+      sfx.blink(); break;
     case 'homing':
       addProj({ type:'homing', owner:w, x:w.x+nx*24, y:w.y+ny*24, vx:nx*s.speed, vy:ny*s.speed, r:11, life:s.life, dmg:s.dmg[L], kb:s.kb[L], turn:s.turn[L], target:null, spin:0 });
       sfx.orb(); break;
@@ -1157,7 +1307,7 @@ function tryCast(w, id, tx, ty){
       AU.tone('sine', 220, 120, .3, .12); break;
     }
   }
-  const cdv = s.cd[L] * (1 - .08*w.items.orb);
+  const cdv = s.cd[L];
   w.cd[id] = cdv; w.cdMax[id] = cdv;
   if (w.actor) w.actor.castT = .35;
   rec(['c', w.id]);
@@ -1187,10 +1337,10 @@ function lightning(w, nx, ny, range, dmg, kb){
 /* ---------- combat ---------- */
 function hit(t, src, dmg, nx, ny, kb){
   if (!t.alive) return;
-  const mul = (1 + (1 - t.hp/t.maxHp)*.7) * (1 - .12*t.items.cloak);
+  const mul = (1 + (1 - t.hp/t.maxHp)*.7) * kbTakenMul(t);
   t.vx += nx*kb*mul; t.vy += ny*kb*mul; t.dash = null;
   t.hp -= dmg; t.flash = .14;
-  if (src && src !== t){ src.roundDmg += dmg; t.lastHit = { by:src, t:state.t }; }
+  if (src && src !== t){ src.roundDmg += dmg; t.lastHit = { by:src, t:state.t }; if (dmg > 0 && src.alive && hasItem(src, 'mask')) src.hp = Math.min(src.maxHp, src.hp + dmg*.25); }
   if (dmg > .5) addText({ x:t.x+rand(-6,6), y:t.y-28, t:.9, T:.9, s:String(Math.round(dmg)), c: t===state.human ? '#ff8a7a' : '#ffd9a8' });
   if (t === state.human || src === state.human) addShake(5 + kb/110);
   if (t.hp <= 0) kill(t);
@@ -1241,30 +1391,109 @@ function explode(x, y, big, z = 34){
   NET.mute--;
 }
 
+/* ---------- arena shape + map ---------- */
+// The safe area is r(θ) = R·(1 + Σ a·cos(m(θ − φ))). Every harmonic m is a multiple of the player count, so
+// each player's slice of the ring is identical. Shrinks run circle, circle, warped, circle, circle, warped…
+// A warped shape keeps the same area as the circle it replaces (circle-equivalent radius, shapeEq).
+const shapeR = (sh, th) => { let k = 1; for (const [m, a, ph] of sh.h) k += a*Math.cos(m*(th - ph)); return sh.R*k; };
+const shapeEq = sh => { let s = 0; for (const h of sh.h) s += h[1]*h[1]/2; return sh.R*Math.sqrt(1 + s); };
+const circleShape = R => ({ R, h:[] });
+function edgeR(th){
+  const A = state.arena;
+  if (A.k >= 1) return shapeR(A.to, th);
+  const e = A.k*A.k*(3 - 2*A.k);
+  return shapeR(A.from, th)*(1 - e) + shapeR(A.to, th)*e;
+}
+const edgeAt = (x, y) => edgeR(Math.atan2(y, x));
+function pitDist(p, x, y){
+  const dx = x - p.x, dy = y - p.y, c = Math.cos(p.a), s = Math.sin(p.a);
+  const lx = dx*c + dy*s, ly = -dx*s + dy*c, h = p.s/2;
+  return hyp(lx - clamp(lx, -h, h), ly - clamp(ly, -h, h));
+}
+const inPit = (x, y, pad = 0) => state.map.pits.some(p => pitDist(p, x, y) < pad);
+const inLavaAt = (x, y, pad = 0) => hyp(x, y) > edgeAt(x, y) || inPit(x, y, pad);
+function nextShape(A){
+  const nc = Math.max(A.min, A.circR - A.step);
+  if ((A.count + 1) % 3 !== 0 || nc <= A.min + 1) return { circ:nc, sh:circleShape(nc) };
+  const n = A.n, m1 = n*(Math.random() < .5 ? 1 : 2), m2 = m1 + n;
+  let a1 = rand(.55, 1), a2 = rand(.2, .6);
+  // keep the wobble inside the old ring and outside the next circle, so the edge only ever moves inward
+  const lim = Math.min(.22, .92*(A.circR/nc - 1), .92*(1 - Math.max(A.min, nc - A.step)/nc));
+  const k = lim/(a1 + a2); a1 *= k; a2 *= k;
+  const h = [[m1, a1, rand(0, TAU)], [m2, a2, rand(0, TAU)]];
+  return { circ:nc, sh:{ R:nc/Math.sqrt(1 + (a1*a1 + a2*a2)/2), h } };
+}
+// one lava pit and one tree per player, repeated around the ring with the players' own rotation
+function genMap(n, r0, off){
+  const wedge = TAU/n, pits = [], trees = [];
+  const pa = off + wedge*rand(.3, .7), pr = r0*rand(.32, .78), pRot = rand(0, Math.PI/2);
+  let ta = 0, tr = 0;
+  for (let tries = 0; tries < 40; tries++){
+    ta = off + wedge*rand(.25, .75); tr = r0*rand(.3, .8);
+    if (hyp(Math.cos(ta)*tr - Math.cos(pa)*pr, Math.sin(ta)*tr - Math.sin(pa)*pr) > 120) break;
+  }
+  for (let i = 0; i < n; i++){
+    const d = i*wedge;
+    pits.push({ x:Math.cos(pa + d)*pr, y:Math.sin(pa + d)*pr, s:40, a:pRot + d });
+    trees.push({ x:Math.cos(ta + d)*tr, y:Math.sin(ta + d)*tr, r:22, seed:i });
+  }
+  return { pits, trees };
+}
+
+/* ---------- items ---------- */
+const hasItem = (w, id) => !!(w.inv && w.inv.items.includes(id));
+const speedOf = w => 150*(1 + (hasItem(w, 'speed') ? .15 : 0) + (w.hasteT > 0 ? .6 : 0) + (w.invisT > 0 ? SP.invis.haste : 0));
+const kbTakenMul = w => (hasItem(w, 'helm') ? .8 : 1)*(hasItem(w, 'cursed') ? 1.15 : 1);
+const lavaMul = w => w.treadsT > 0 ? 0 : (hasItem(w, 'cape') ? .65 : 1)*(hasItem(w, 'cursed') ? .4 : 1);
+function makeFireball(w, nx, ny, L){
+  const s = SP.fireball;
+  addProj({ type:'fireball', owner:w, x:w.x+nx*22, y:w.y+ny*22, vx:nx*s.speed, vy:ny*s.speed, r:9, life:s.life, dmg:s.dmg[L], kb:s.kb[L], sp0:s.speed });
+}
+function useItem(w, i, tx, ty){
+  const id = w.inv.items[i], it = ITEMS[id];
+  if (!it || it.kind === 'passive' || !w.alive || state.phase !== 'fight' || w.inv.icd[i] > 0) return false;
+  switch (id){
+    case 'haste': w.hasteT = 3; burst(w.x, w.y, 14, { col:[255,220,140], sp:[40,140], life:[.2,.5], size:[2,4] }); sfx.thrust(); break;
+    case 'staff': {
+      let dx = tx - w.x, dy = ty - w.y, d = hyp(dx, dy); if (d < 1){ dx = Math.cos(w.facing); dy = Math.sin(w.facing); d = 1; }
+      w.facing = Math.atan2(dy, dx); makeFireball(w, dx/d, dy/d, (w.spells.fireball || 1) - 1); sfx.fire(); break;
+    }
+    case 'aegis': w.shieldT = Math.max(w.shieldT, 1.5); sfx.ward(); break;
+    case 'treads': w.treadsT = 4; w.hp = Math.min(w.maxHp, w.hp + 10); burst(w.x, w.y, 18, { col:[255,120,40], sp:[30,120], life:[.3,.6], size:[2,4], z:4, vz:[40,120] }); sfx.heal(); break;
+    case 'watch': w.watchT = 5; addRing({ x:w.x, y:w.y, r0:12, r1:60, t:.5, T:.5, col:'255,220,150', w:3 }); sfx.orb(); break;
+    case 'clarity': w.clarityT = 5; w.inv.items[i] = null; burst(w.x, w.y, 16, { col:[120,200,255], sp:[20,90], life:[.4,.8], size:[2,4], vz:[30,90] }); sfx.heal(); break;
+  }
+  if (it.cd){ w.inv.icd[i] = it.cd; w.inv.icdMax[i] = it.cd; }
+  return true;
+}
+
 /* ---------- AI ---------- */
 function botThink(w, dt){
   const ai = w.ai, D = DIFF[state.diff];
+  if (w.invisT > 0 && ai.target && ai.target.alive){ w.mx = ai.target.x; w.my = ai.target.y; }   // charge while unseen
   ai.t -= dt; if (ai.t > 0) return;
   ai.t = D.react * rand(.7, 1.3);
-  const R = state.arena.r, dc = hyp(w.x, w.y);
-  const foes = state.warlocks.filter(o => o.alive && o !== w); if (!foes.length) return;
-  if (!ai.target || !ai.target.alive || Math.random() < .07){
+  const dc = hyp(w.x, w.y), R = edgeAt(w.x, w.y);
+  const foes = state.warlocks.filter(o => o.alive && o !== w && !(o.invisT > 0)); if (!foes.length) return;
+  if (!ai.target || !ai.target.alive || ai.target.invisT > 0 || Math.random() < .07){
     let best = null, bs = 1e9;
-    for (const o of foes){ const s = hyp(o.x-w.x, o.y-w.y) - (R - hyp(o.x,o.y))*.8 + rand(0,120); if (s < bs){ bs = s; best = o; } }
+    for (const o of foes){ const s = hyp(o.x-w.x, o.y-w.y) - (edgeAt(o.x, o.y) - hyp(o.x, o.y))*.8 + rand(0,120); if (s < bs){ bs = s; best = o; } }
     ai.target = best;
   }
   const tg = ai.target;
   const toC = dc > 1 ? [-w.x/dc, -w.y/dc] : [0,0];
   let moved = false;
+  botItems(w, dc, R, tg);
 
-  if (dc > R - 8){
+  if (dc > R - 8 || inPit(w.x, w.y, w.r)){
     if (w.spells.blink && !(w.cd.blink>0) && Math.random() < D.dodge + .15) tryCast(w, 'blink', w.x+toC[0]*400, w.y+toC[1]*400);
+    else if (w.spells.swap && !(w.cd.swap>0) && tg && edgeAt(tg.x, tg.y) - hyp(tg.x, tg.y) > 150 && hyp(tg.x-w.x, tg.y-w.y) < SP.swap.range[w.spells.swap-1]) tryCast(w, 'swap', tg.x, tg.y);
     w.mx = w.x*.3; w.my = w.y*.3; moved = true;
   }
 
   let th = null, tmin = .9;
   for (const p of state.projectiles){
-    if (p.owner === w || p.type === 'well' || p.type === 'drainBack') continue;
+    if (p.owner === w || p.type === 'well' || p.type === 'drainBack' || p.type === 'swap') continue;
     const vv = p.vx*p.vx + p.vy*p.vy; if (!vv) continue;
     const tca = ((w.x-p.x)*p.vx + (w.y-p.y)*p.vy) / vv;
     if (tca < 0 || tca > tmin) continue;
@@ -1273,11 +1502,12 @@ function botThink(w, dt){
   }
   let mt = null;
   for (const m of state.meteors) if (hyp(m.x-w.x, m.y-w.y) < m.rad + w.r + 12) mt = m;
+  for (const sc of state.scourges) if (sc.owner !== w && sc.owner.alive && hyp(sc.owner.x-w.x, sc.owner.y-w.y) < sc.rad + w.r + 10) mt = { x:sc.owner.x, y:sc.owner.y, rad:sc.rad };
 
   if (!moved && mt && Math.random() < D.dodge + .1){
     const dx = w.x-mt.x, dy = w.y-mt.y, d = hyp(dx,dy) || 1;
     let tx = w.x + dx/d*(mt.rad+45), ty = w.y + dy/d*(mt.rad+45);
-    if (hyp(tx,ty) > R-30){ tx = w.x + toC[0]*(mt.rad+45); ty = w.y + toC[1]*(mt.rad+45); }
+    if (hyp(tx,ty) > edgeAt(tx, ty) - 30){ tx = w.x + toC[0]*(mt.rad+45); ty = w.y + toC[1]*(mt.rad+45); }
     w.mx = tx; w.my = ty; moved = true;
   } else if (!moved && th && Math.random() < D.dodge){
     const nearEdge = dc > R - 110;
@@ -1299,32 +1529,53 @@ function botThink(w, dt){
       if (Math.random() < .1) ai.orbit *= -1;
       const a = Math.atan2(w.y-tg.y, w.x-tg.x) + ai.orbit*.55;
       let tx = tg.x + Math.cos(a)*230, ty = tg.y + Math.sin(a)*230;
-      const td = hyp(tx,ty), lim = R - 85; if (td > lim){ tx *= lim/td; ty *= lim/td; }
+      const td = hyp(tx,ty), lim = edgeAt(tx, ty) - 85; if (td > lim){ tx *= lim/td; ty *= lim/td; }
       w.mx = tx; w.my = ty;
     }
   }
+  // never plan a step into a lava pit
+  if (w.mx !== null){
+    for (const p of state.map.pits) if (pitDist(p, w.mx, w.my) < 45){ const dx = w.mx - p.x, dy = w.my - p.y, d = hyp(dx, dy) || 1; w.mx = p.x + dx/d*75; w.my = p.y + dy/d*75; }
+  }
   if (tg && state.phase === 'fight' && Math.random() < D.agg) botAttack(w, tg, D);
 }
+function botItems(w, dc, R, tg){
+  const inv = w.inv; if (!inv.slots) return;
+  const use = (id, x = w.x + Math.cos(w.facing)*300, y = w.y + Math.sin(w.facing)*300) => { const i = inv.items.indexOf(id); if (i >= 0 && !(inv.icd[i] > 0)) useItem(w, i, x, y); };
+  if (w.hp < w.maxHp*.5) use('clarity');
+  if (dc > R - 5 || inPit(w.x, w.y, w.r)) use('treads');
+  if (dc > R - 90) use('haste');
+  if (w.hp < w.maxHp*.6 && dc > R - 150) use('aegis');
+  if (Object.values(w.cd).filter(v => v > 3).length >= 3) use('watch');
+  if (tg && hyp(tg.x - w.x, tg.y - w.y) < 600) use('staff', tg.x + tg.evx*.6, tg.y + tg.evy*.6);
+}
 function botAttack(w, tg, D){
-  const R = state.arena.r;
   const dx = tg.x-w.x, dy = tg.y-w.y, d = hyp(dx,dy) || 1;
-  const tR = hyp(tg.x, tg.y) || 1, edgeT = R - tR;
+  const tR = hyp(tg.x, tg.y) || 1, edgeT = edgeAt(tg.x, tg.y) - tR, myEdge = edgeAt(w.x, w.y) - hyp(w.x, w.y);
   const ready = id => w.spells[id] && !(w.cd[id] > 0);
   const lvl = id => w.spells[id]-1;
   const aim = (x, y) => { const a = Math.atan2(y-w.y, x-w.x) + (Math.random()-.5)*2*D.aim, dd = hyp(x-w.x, y-w.y); return [w.x+Math.cos(a)*dd, w.y+Math.sin(a)*dd]; };
   const lead = t => [tg.x + tg.evx*t, tg.y + tg.evy*t];
+  if (ready('scourge') && state.warlocks.some(o => o.alive && o !== w && !(o.invisT > 0) && hyp(o.x-w.x, o.y-w.y) < SP.scourge.rad[lvl('scourge')]*.85)) return tryCast(w, 'scourge', w.x, w.y);
   if (ready('gravity') && edgeT < 140 && d < 420){
     const ox = tg.x/tR, oy = tg.y/tR; return tryCast(w, 'gravity', tg.x+ox*120, tg.y+oy*120);
   }
+  // the classic combo: spray into your own gravity well
+  const myWell = state.wells.find(g => g.owner === w && hyp(g.x-w.x, g.y-w.y) < 480);
+  if (ready('firespray') && myWell) return tryCast(w, 'firespray', myWell.x, myWell.y);
+  if (ready('swap') && myEdge < 120 && edgeT > myEdge + 120 && d < SP.swap.range[lvl('swap')]) return tryCast(w, 'swap', ...aim(...lead(d/SP.swap.speed[lvl('swap')])));
   if (ready('meteor') && d < 430 && (edgeT < 160 || Math.random() < .3)){
     const [lx, ly] = lead(1.0);
     if (hyp(lx-w.x, ly-w.y) > SP.meteor.rad[lvl('meteor')] + 30) return tryCast(w, 'meteor', ...aim(lx, ly));
   }
+  if (ready('invis') && d < 380 && Math.random() < .35) return tryCast(w, 'invis', tg.x, tg.y);
   if (ready('lightning') && d < SP.lightning.range[lvl('lightning')] - 10) return tryCast(w, 'lightning', ...aim(...lead(.05)));
-  if (ready('thrust') && d < 220 && dc(w) < R - 120){
+  if (ready('thrust') && d < 220 && myEdge > 120){
     const outward = (tg.x*dx + tg.y*dy) / (tR*d);
     if (outward > .35) return tryCast(w, 'thrust', tg.x, tg.y);
   }
+  if (ready('firespray') && d < 360) return tryCast(w, 'firespray', ...aim(...lead(d/SP.firespray.speed)));
+  if (ready('bouncer') && d < 600) return tryCast(w, 'bouncer', ...aim(...lead(d/SP.bouncer.speed)));
   if (ready('drain') && d < 560 && (w.hp < w.maxHp*.75 || Math.random() < .3)) return tryCast(w, 'drain', ...aim(...lead(d/SP.drain.speed)));
   if (ready('homing') && d < 650 && Math.random() < .6) return tryCast(w, 'homing', tg.x, tg.y);
   if (ready('fireball') && d < 640) return tryCast(w, 'fireball', ...aim(...lead(d/SP.fireball.speed)));
@@ -1332,27 +1583,47 @@ function botAttack(w, tg, D){
 const dc = w => hyp(w.x, w.y);
 
 /* ---------- simulation ---------- */
+function bouncerRetarget(p, from){
+  const cands = state.warlocks.filter(o => o.alive && o !== p.owner && o !== from && !(o.invisT > 0));
+  let tot = 0;
+  const wts = cands.map(o => { const d = hyp(o.x - p.x, o.y - p.y); if (d > SP.bouncer.seek) return 0; const wt = 1/Math.pow(d + 60, 1.5); tot += wt; return wt; });
+  if (tot > 0){ let r = Math.random()*tot; for (let i = 0; i < cands.length; i++){ if (!wts[i]) continue; r -= wts[i]; if (r <= 0){ p.target = cands[i]; return true; } } }
+  p.target = null;
+  return false;
+}
+function swapPlaces(a, b){
+  for (const w of [a, b]){ burst(w.x, w.y, 18, { col:[160,200,255], sp:[40,160], life:[.3,.6], size:[2,4] }); addRing({ x:w.x, y:w.y, r0:6, r1:44, t:.35, T:.35, col:'160,200,255', w:3 }); }
+  [a.x, b.x] = [b.x, a.x]; [a.y, b.y] = [b.y, a.y];
+  a.px = a.x; a.py = a.y; b.px = b.x; b.py = b.y;
+  a.vx *= .3; a.vy *= .3; b.vx *= .3; b.vy *= .3; a.mx = null; b.mx = null; a.dash = b.dash = null;
+  b.lastHit = { by:a, t:state.t };
+  sfx.blink();
+}
 function simulate(dt){
   state.t += dt;
   const A = state.arena;
   if (state.phase === 'fight'){
     A.next -= dt;
-    if (A.next <= 0 && A.target > A.min){
-      A.target = Math.max(A.min, A.target - A.step); A.next = 12;
+    if (A.next <= 0 && A.circR > A.min + 1){
+      const nx = A.up; A.from = A.to; A.to = nx.sh; A.circR = nx.circ; A.k = 0; A.count++; A.next = 12;
+      A.up = nextShape(A);
+      const msg = A.to.h.length ? 'The ring warps' : 'The ring crumbles';
       sfx.crumble(); addShake(3);
-      if (!state.demo) banner('', 'The ring crumbles', 1.2);
-      rec(['bn', '', 'The ring crumbles', 1.2]);
+      if (!state.demo) banner('', msg, 1.2);
+      rec(['bn', '', msg, 1.2]);
     }
   }
-  if (A.r > A.target){
-    const step = Math.min(A.r - A.target, A.step*.8*dt); A.r -= step;
-  }
+  if (A.k < 1) A.k = Math.min(1, A.k + dt/1.8);
+  { const e0 = shapeEq(A.from), e1 = shapeEq(A.to); A.r = e0 + (e1 - e0)*A.k; A.target = e1; }
 
   const ws = state.warlocks;
   for (const w of ws){
     if (!w.alive) continue;
-    for (const k in w.cd) if (w.cd[k] > 0) w.cd[k] = Math.max(0, w.cd[k]-dt);
-    if (w.shieldT > 0) w.shieldT -= dt;
+    const cdRate = w.watchT > 0 ? 2 : 1;
+    for (const k in w.cd) if (w.cd[k] > 0) w.cd[k] = Math.max(0, w.cd[k] - dt*cdRate);
+    for (let i = 0; i < 6; i++) if (w.inv.icd[i] > 0) w.inv.icd[i] = Math.max(0, w.inv.icd[i] - dt);
+    for (const b of ['shieldT', 'hasteT', 'treadsT', 'watchT', 'invisT']) if (w[b] > 0) w[b] = Math.max(0, w[b] - dt);
+    if (w.clarityT > 0){ w.clarityT -= dt; w.hp = Math.min(w.maxHp, w.hp + 6*dt); }
     if (w.flash > 0) w.flash -= dt;
     if (!w.human && !w.remote && state.phase === 'fight') botThink(w, dt);
 
@@ -1368,13 +1639,13 @@ function simulate(dt){
           break;
         }
       }
-      if (w.dash && w.dash.left <= 0) w.dash = null;
+      if (w.dash && (w.dash.left <= 0 || state.map.trees.some(t => hyp(w.x - t.x, w.y - t.y) < t.r + w.r))) w.dash = null;
     } else if (w.mx !== null && state.phase === 'fight'){
       const dx = w.mx-w.x, dy = w.my-w.y, d = hyp(dx,dy);
       if (d < 3) w.mx = null;
       else {
         const ctrl = clamp(1 - hyp(w.vx,w.vy)/320, .15, 1);
-        const st = Math.min(d, 150*(1+.12*w.items.boots)*ctrl*dt);
+        const st = Math.min(d, speedOf(w)*ctrl*dt);
         w.x += dx/d*st; w.y += dy/d*st;
         w.facing = turnToward(w.facing, Math.atan2(dy,dx), 12*dt);
       }
@@ -1382,9 +1653,23 @@ function simulate(dt){
     w.x += w.vx*dt; w.y += w.vy*dt;
     const f = Math.exp(-2.6*dt); w.vx *= f; w.vy *= f;
 
-    if (hyp(w.x, w.y) > A.r && state.phase !== 'countdown'){
-      w.hp -= 14*(1 - .25*w.items.charm)*dt;
-      if (w.hp <= 0) kill(w);
+    if (state.phase !== 'countdown' && inLavaAt(w.x, w.y, w.r*.6)){
+      const m = lavaMul(w);
+      if (m > 0){ w.hp -= 14*m*dt; if (w.hp <= 0) kill(w); }
+    }
+    // an unseen warlock that runs into a rival lands the blow and becomes visible again
+    if (w.alive && w.invisT > 0){
+      for (const o of ws){
+        if (!o.alive || o === w) continue;
+        const ox = o.x - w.x, oy = o.y - w.y, od = hyp(ox, oy);
+        if (od < w.r + o.r + 4){
+          const L = w.spells.invis - 1, s = SP.invis, nx = od > .01 ? ox/od : Math.cos(w.facing), ny = od > .01 ? oy/od : Math.sin(w.facing);
+          w.invisT = 0;
+          if (o.shieldT > 0) hit(w, o, 0, -nx, -ny, s.kb[L]*.6);
+          else { hit(o, w, s.dmg[L], nx, ny, s.kb[L]); burst(o.x, o.y, 22, { col:[150,220,255], sp:[60,220], life:[.2,.5], size:[2,4] }); addRing({ x:o.x, y:o.y, r0:8, r1:60, t:.3, T:.3, col:'150,220,255', w:4 }); sfx.thrust(); }
+          break;
+        }
+      }
     }
     if (dt > 0){ const k = Math.min(1, dt*8); w.evx += ((w.x-w.px)/dt - w.evx)*k; w.evy += ((w.y-w.py)/dt - w.evy)*k; }
     w.px = w.x; w.py = w.y;
@@ -1393,6 +1678,15 @@ function simulate(dt){
     const a = ws[i], b = ws[j]; if (!a.alive || !b.alive) continue;
     const dx = b.x-a.x, dy = b.y-a.y, d = hyp(dx,dy), m = a.r+b.r;
     if (d < m && d > .01){ const o = (m-d)/2, nx = dx/d, ny = dy/d; a.x -= nx*o; a.y -= ny*o; b.x += nx*o; b.y += ny*o; }
+  }
+  // trees are solid: slide around them, knockback bounces off softly
+  for (const t of state.map.trees) for (const w of ws){
+    if (!w.alive) continue;
+    const dx = w.x - t.x, dy = w.y - t.y, d = hyp(dx, dy), m = t.r + w.r;
+    if (d < m && d > .01){
+      const nx = dx/d, ny = dy/d; w.x = t.x + nx*m; w.y = t.y + ny*m;
+      const vn = w.vx*nx + w.vy*ny; if (vn < 0){ w.vx -= vn*nx*1.4; w.vy -= vn*ny*1.4; }
+    }
   }
 
   // projectiles
@@ -1415,45 +1709,73 @@ function simulate(dt){
       }
       continue;
     }
-    if (p.type === 'homing'){
-      if (!p.target || !p.target.alive) p.target = nearestEnemy(p.owner, p.x, p.y);
+    if (p.type === 'homing' || (p.type === 'bouncer' && p.target)){
+      if (p.type === 'homing' && (!p.target || !p.target.alive || p.target.invisT > 0)) p.target = nearestEnemy(p.owner, p.x, p.y);
+      if (p.type === 'bouncer' && (!p.target.alive || (p.target !== p.owner && p.target.invisT > 0))){ if (!bouncerRetarget(p, null)) p.target = p.owner.alive ? p.owner : null; }
       if (p.target){
+        const turn = p.type === 'bouncer' ? 8 : p.turn;
         const cur = Math.atan2(p.vy, p.vx), want = Math.atan2(p.target.y-p.y, p.target.x-p.x);
         let df = want - cur; while (df > Math.PI) df -= TAU; while (df < -Math.PI) df += TAU;
-        const na = cur + clamp(df, -p.turn*dt, p.turn*dt), sp = hyp(p.vx, p.vy);
+        const na = cur + clamp(df, -turn*dt, turn*dt), sp = hyp(p.vx, p.vy);
         p.vx = Math.cos(na)*sp; p.vy = Math.sin(na)*sp;
       }
-      p.spin += dt*8;
     }
+    if (p.spin !== undefined) p.spin += dt*8;
     p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt;
     if (p.type === 'well'){
       p.travel -= hyp(p.vx, p.vy)*dt;
       if (p.travel <= 0){ deployWell(p); continue; }
     }
     if (p.life <= 0){ p.dead = true; burst(p.x, p.y, 6, { col:[255,150,60], sp:[20,80], life:[.2,.4], size:[1.5,3] }); continue; }
-
+    // trees block missiles
+    const tree = state.map.trees.find(t => hyp(p.x - t.x, p.y - t.y) < t.r + p.r);
+    if (tree){
+      if (p.type === 'well'){ deployWell(p); continue; }
+      p.dead = true; burst(p.x, p.y, 10, { col:[255,150,60], sp:[30,120], life:[.2,.45], size:[1.5,3.5] });
+      if (p.type !== 'spray') sfx.boom(false);
+      continue;
+    }
+    // a bouncer sent home touches its caster harmlessly and looks for someone else
+    if (p.type === 'bouncer' && p.target === p.owner && hyp(p.owner.x - p.x, p.owner.y - p.y) < p.owner.r + p.r + 4){
+      p.hits++; p.life = 3;
+      if (p.hits > p.maxB || !bouncerRetarget(p, null)) { p.dead = true; burst(p.x, p.y, 10, { col:[255,210,120], sp:[30,120], life:[.2,.5], size:[1.5,3] }); }
+      continue;
+    }
     for (const w of ws){
-      if (!w.alive || w === p.owner) continue;
+      if (!w.alive || w === p.owner || w === p.skip) continue;
       if (hyp(w.x-p.x, w.y-p.y) < w.r + p.r){
         if (p.type === 'well'){ deployWell(p); break; }
         if (w.shieldT > 0){
           const nx = (p.x-w.x), ny = (p.y-w.y), nd = hyp(nx,ny) || 1, ux = nx/nd, uy = ny/nd;
           const dot = p.vx*ux + p.vy*uy; p.vx -= 2*dot*ux; p.vy -= 2*dot*uy;
-          p.x = w.x + ux*(w.r+p.r+2); p.y = w.y + uy*(w.r+p.r+2); p.owner = w; p.life = Math.max(p.life, .8); p.target = null;
+          p.x = w.x + ux*(w.r+p.r+2); p.y = w.y + uy*(w.r+p.r+2); p.owner = w; p.life = Math.max(p.life, .8); p.target = null; p.skip = null;
           burst(p.x, p.y, 10, { col:[143,216,255], sp:[60,160], life:[.15,.35], size:[1.5,3] }); sfx.ward();
           break;
         }
         const sp = hyp(p.vx, p.vy) || 1;
+        if (p.type === 'swap'){ swapPlaces(p.owner, w); p.dead = true; break; }
         hit(w, p.owner, p.dmg, p.vx/sp, p.vy/sp, p.kb);
         if (p.type === 'drain'){
           burst(p.x, p.y, 18, { col:[90,255,150], sp:[40,160], life:[.25,.55], size:[2,4] });
           addRing({ x:p.x, y:p.y, r0:6, r1:34, t:.3, T:.3, col:'90,255,150', w:3 });
           if (p.owner.alive) addProj({ type:'drainBack', owner:p.owner, x:p.x, y:p.y, vx:-p.vx*.4, vy:-p.vy*.4, r:9, life:6, heal:p.heal, spin:0 });
           sfx.drain();
+        } else if (p.type === 'bouncer'){
+          burst(p.x, p.y, 14, { col:[255,210,120], sp:[40,160], life:[.2,.5], size:[2,4] });
+          addRing({ x:p.x, y:p.y, r0:6, r1:36, t:.25, T:.25, col:'255,200,110', w:3 }); sfx.boom(false);
+          p.dmg += SP.bouncer.inc; p.hits++; p.skip = w; p.life = 3;
+          if (p.hits > p.maxB){ p.dead = true; break; }
+          if (!bouncerRetarget(p, w)) p.target = p.owner.alive ? p.owner : null;
+          if (!p.target){ p.dead = true; }
+          break;
+        } else if (p.type === 'spray'){
+          burst(p.x, p.y, 8, { col:[255,160,60], sp:[30,120], life:[.2,.4], size:[1.5,3.5] });
+          addRing({ x:p.x, y:p.y, r0:4, r1:22, t:.2, T:.2, col:'255,170,80', w:2 });
         } else { explode(p.x, p.y, false); sfx.boom(false); }
         p.dead = true; break;
       }
     }
+    if (p.skip && hyp(p.skip.x - p.x, p.skip.y - p.y) > p.skip.r + p.r + 20) p.skip = null;
     if (hyp(p.x, p.y) > state.arena.r0 + 700) p.dead = true;
   }
   for (let i=0;i<P.length;i++){
@@ -1474,6 +1796,19 @@ function simulate(dt){
         const f = g.pull*(.25 + .75*(1 - d/g.rad));
         w.vx += dx/d*f*dt; w.vy += dy/d*f*dt;
         w.lastHit = { by:g.owner, t:state.t };
+      }
+    }
+    // missiles bend into the well too; Fire Spray keeps swirling there instead of burning out
+    const pr = g.rad*1.15;
+    for (const p of state.projectiles){
+      if (p.type === 'well' || p.type === 'drainBack' || p.type === 'swap') continue;
+      const dx = g.x - p.x, dy = g.y - p.y, d = hyp(dx, dy);
+      if (d < pr && d > 4){
+        const spray = p.type === 'spray', f = g.pull*(spray ? 3.4 : 2.2)*(.4 + .6*(1 - d/pr));
+        p.vx += dx/d*f*dt; p.vy += dy/d*f*dt;
+        // spray loses its sideways speed inside the well, so it spirals into the centre instead of orbiting past it
+        if (spray){ const ux = dx/d, uy = dy/d, vr = p.vx*ux + p.vy*uy, damp = Math.exp(-3*dt); p.vx = ux*vr + (p.vx - ux*vr)*damp; p.vy = uy*vr + (p.vy - uy*vr)*damp; p.life = Math.max(p.life, .4); }
+        const sp = hyp(p.vx, p.vy), cap = (p.sp0 || 600)*1.25; if (sp > cap){ p.vx *= cap/sp; p.vy *= cap/sp; }
       }
     }
   }
@@ -1498,6 +1833,27 @@ function simulate(dt){
   }
   state.meteors = state.meteors.filter(m => m.t > 0);
 
+  // Scourge: a charged blast around the caster; the closer a rival stands, the harder the shove
+  for (const sc of state.scourges){
+    sc.t -= dt;
+    if (sc.t > 0) continue;
+    const o = sc.owner; if (!o.alive) continue;
+    for (const w of ws){
+      if (!w.alive || w === o) continue;
+      const dx = w.x - o.x, dy = w.y - o.y, d = hyp(dx, dy);
+      if (d < sc.rad + w.r){
+        const k = clamp(1 - d/sc.rad, 0, 1); let nx, ny;
+        if (d < 1){ const a = Math.random()*TAU; nx = Math.cos(a); ny = Math.sin(a); } else { nx = dx/d; ny = dy/d; }
+        hit(w, o, sc.dmg*(.7 + .3*k), nx, ny, sc.kb*(.45 + .55*k));
+      }
+    }
+    explode(o.x, o.y, true, 6);
+    addRing({ x:o.x, y:o.y, r0:12, r1:sc.rad, t:.4, T:.4, col:'255,80,40', w:7 });
+    burst(o.x, o.y, 34, { col:[200,40,20], sp:[120,sc.rad*2.2], life:[.3,.6], size:[2.5,5], z:10, vz:[10,60] });
+    addShake(o === state.human ? 6 : 3); sfx.boom(true);
+  }
+  state.scourges = state.scourges.filter(sc => sc.t > 0 && sc.owner.alive);
+
   if (state.phase === 'fight'){
     const alive = ws.filter(w => w.alive);
     if (alive.length <= 1) endRound(alive[0] || null);
@@ -1517,19 +1873,19 @@ function updateFx(dt){
   for (const p of state.particles){
     p.life -= dt; const f = Math.exp(-p.drag*dt); p.vx *= f; p.vy *= f;
     p.vz -= p.grav*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.z += p.vz*dt;
-    if (p.grav && p.z < 0 && hyp(p.x, p.y) < R){ p.z = 0; p.vz *= -.3; p.vx *= .6; p.vy *= .6; }
+    if (p.grav && p.z < 0 && hyp(p.x, p.y) < edgeAt(p.x, p.y)){ p.z = 0; p.vz *= -.3; p.vx *= .6; p.vy *= .6; }
     if (p.z < LAVA_Y) p.life = 0;
   }
   state.particles = state.particles.filter(p => p.life > 0);
   // embers drifting off the lava sea
   for (let i=0;i<2;i++){
     const ex = state.cam.fx + rand(-900, 900), ey = state.cam.fy + rand(-650, 650);
-    if (hyp(ex, ey) < R + 15) continue;
+    if (hyp(ex, ey) < edgeAt(ex, ey) + 15) continue;
     state.particles.push({ x:ex, y:ey, z:LAVA_Y + 2, vx:rand(-10,10), vy:rand(-10,10), vz:rand(25,70), grav:0, life:rand(1.2,2.6), max:2.6, size:rand(1.5,3.2), col:[255,rand(90,170),40], glow:true, drag:.3 });
   }
   if (Math.random() < .12){
     const bx = state.cam.fx + rand(-800, 800), by = state.cam.fy + rand(-600, 600);
-    if (hyp(bx, by) > R + 40){
+    if (hyp(bx, by) > edgeAt(bx, by) + 40){
       state.rings.push({ x:bx, y:by, r0:3, r1:rand(12, 22), t:.6, T:.6, col:'255,160,70', w:2, h:LAVA_Y + 1.5 });
       burst(bx, by, 5, { col:[255,rand(120,200),50], sp:[10,50], life:[.3,.7], size:[2,4], z:LAVA_Y + 2, vz:[60,160], grav:380 });
     }
@@ -1612,6 +1968,7 @@ addEventListener('keydown', e => {
   if (k === 'Escape'){ if (state.armed) setArmed(null); else togglePause(); return; }
   if (k === 'M'){ toggleMute(); return; }
   if (k === 'P'){ togglePause(); return; }
+  if (/^[1-6]$/.test(k) && state.human){ useCmd(state.human, +k - 1, state.cursor.x, state.cursor.y); e.preventDefault(); return; }
   const id = KEYMAP[k], h = state.human;
   if (id && h && !state.paused && state.phase === 'fight' && h.alive){
     castCmd(h, id, state.cursor.x, state.cursor.y); e.preventDefault();
@@ -1630,8 +1987,8 @@ function setArmed(id){
 // Tap a spell = auto-aim at the nearest rival; drag = aim, release = cast; drag back onto the button = cancel.
 let joy = null, tAim = null;
 if (IS_TOUCH) gameEl.classList.add('touch');
-const TOUCH_ORDER = ['blink','shield','lightning','drain','homing','meteor','thrust','gravity'];
-const TB_SLOTS = [[100,180],[100,208],[100,236],[100,264],[172,182],[172,203],[172,224],[172,245]]
+const TOUCH_ORDER = ['scourge','blink','shield','lightning','drain','homing','bouncer','firespray','meteor','swap','invis','thrust','gravity'];
+const TB_SLOTS = [[100,180],[100,208],[100,236],[100,264],[172,180],[172,199],[172,218],[172,237],[172,256],[244,182],[244,199],[244,216],[244,233]]
   .map(([r, deg]) => [Math.cos(deg*Math.PI/180)*r, Math.sin(deg*Math.PI/180)*r]);
 function buildTouch(){
   if (!IS_TOUCH || state.demo || !state.human) return;
@@ -1656,20 +2013,23 @@ function applyJoystick(){
 }
 function spellRange(h, id){
   const s = SP[id], L = h.spells[id] - 1;
-  if (id === 'lightning' || id === 'blink') return s.range[L];
+  if (id === 'lightning' || id === 'blink' || id === 'swap') return s.range[L];
+  if (id === 'firespray') return 460;
   if (id === 'meteor' || id === 'gravity') return s.range;
   if (id === 'thrust') return s.dist[L];
   return 600;
 }
 function autoCast(h, id){
   if (id === 'fireball') return castCmd(h, id, h.x + Math.cos(h.facing)*400, h.y + Math.sin(h.facing)*400);  // skill shot: fires where you face
-  if (id === 'shield') return castCmd(h, 'shield', h.x, h.y);
+  if (id === 'shield' || id === 'scourge') return castCmd(h, id, h.x, h.y);
   if (id === 'blink'){ const d = hyp(h.x, h.y) || 1; return castCmd(h, 'blink', h.x - h.x/d*400, h.y - h.y/d*400); }  // tap = escape toward the centre
   let tg = null, bd = 1e9;
   for (const o of state.warlocks){ if (!o.alive || o === h) continue; const d = hyp(o.x - h.x, o.y - h.y); if (d < bd){ bd = d; tg = o; } }
   if (!tg) return castCmd(h, id, h.x + Math.cos(h.facing)*300, h.y + Math.sin(h.facing)*300);
   const lead = t => [tg.x + tg.evx*t, tg.y + tg.evy*t];
   if (id === 'drain') return castCmd(h, id, ...lead(bd/SP.drain.speed));
+  if (id === 'bouncer' || id === 'firespray') return castCmd(h, id, ...lead(bd/SP[id].speed));
+  if (id === 'swap') return castCmd(h, id, ...lead(bd/SP.swap.speed[h.spells.swap - 1]));
   if (id === 'meteor') return castCmd(h, id, ...lead(1));
   if (id === 'gravity'){ const r = hyp(tg.x, tg.y) || 1; return castCmd(h, id, tg.x + tg.x/r*110, tg.y + tg.y/r*110); }
   return castCmd(h, id, tg.x, tg.y);
@@ -1739,14 +2099,17 @@ function drawMini(){
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, S, S);
   g.translate(S/2, S/2);
   g.fillStyle = 'rgba(130,34,8,.55)'; g.beginPath(); g.arc(0, 0, S/2 - 1, 0, TAU); g.fill();
-  g.fillStyle = '#3b2a23'; g.beginPath(); g.arc(0, 0, A.r*sc, 0, TAU); g.fill();
-  g.strokeStyle = '#ffa060'; g.lineWidth = S/90; g.stroke();
+  g.fillStyle = '#3b2a23'; g.beginPath();
+  for (let i = 0; i <= 96; i++){ const th = i/96*TAU, r = edgeR(th)*sc; i ? g.lineTo(Math.cos(th)*r, Math.sin(th)*r) : g.moveTo(Math.cos(th)*r, Math.sin(th)*r); }
+  g.fill(); g.strokeStyle = '#ffa060'; g.lineWidth = S/90; g.stroke();
+  g.fillStyle = '#ff7a30'; for (const p of state.map.pits) g.fillRect(p.x*sc - S/60, p.y*sc - S/60, S/30, S/30);
+  g.fillStyle = '#1c130f'; for (const t of state.map.trees){ g.beginPath(); g.arc(t.x*sc, t.y*sc, S/45, 0, TAU); g.fill(); }
   const C = state.cam, vr = C.viewR*sc;
   g.strokeStyle = 'rgba(242,229,209,.25)'; g.lineWidth = S/120; g.strokeRect(C.fx*sc - vr, C.fy*sc - vr*.6, vr*2, vr*1.2);
   g.fillStyle = '#ff5a2a';
   for (const m of state.meteors){ g.beginPath(); g.arc(m.x*sc, m.y*sc, S/40, 0, TAU); g.fill(); }
   for (const w of state.warlocks){
-    if (!w.alive) continue;
+    if (!w.alive || (w.invisT > 0 && w !== state.human)) continue;
     g.fillStyle = w.color; g.beginPath(); g.arc(w.x*sc, w.y*sc, w.human ? S/22 : S/30, 0, TAU); g.fill();
     if (w.human){ g.strokeStyle = '#fff'; g.lineWidth = S/70; g.stroke(); }
   }
@@ -1754,7 +2117,37 @@ function drawMini(){
 
 
 /* ---------- HUD ---------- */
+/* inventory HUD: six Warcraft-style slots, keys 1-6 */
+function buildInv(){
+  $('inv').innerHTML = [0,1,2,3,4,5].map(i => `<button type="button" class="inv" id="inv-${i}" data-slot="${i}"><span class="ii"></span><span class="k">${i + 1}</span><span class="cd"></span><span class="cdt"></span></button>`).join('');
+}
+function updateInv(h){
+  for (let i = 0; i < 6; i++){
+    const el = $('inv-' + i); if (!el) continue;
+    const locked = i >= h.inv.slots, id = h.inv.items[i], it = id && ITEMS[id];
+    el.classList.toggle('locked', locked); el.classList.toggle('empty', !locked && !id); el.classList.toggle('passive', !!it && it.kind === 'passive');
+    const ii = el.querySelector('.ii');
+    if (ii.dataset.id !== (id || '') || el.dataset.locked !== String(locked)){
+      ii.dataset.id = id || ''; el.dataset.locked = String(locked); ii.innerHTML = id ? ICON[id] : '';
+      el.title = it ? `${it.name}: ${it.desc}` : locked ? 'Locked slot. Unlock it in the shop.' : 'Empty slot';
+    }
+    const cd = h.inv.icd[i] || 0, mx = h.inv.icdMax[i] || 1;
+    el.querySelector('.cd').style.setProperty('--p', cd > 0 ? (cd/mx).toFixed(3) : 0);
+    el.querySelector('.cdt').textContent = cd > 0 ? Math.ceil(cd) : '';
+  }
+}
+function useCmd(h, i, x, y){
+  if (!h || !h.alive || state.phase !== 'fight') return;
+  if (NET.role === 'client'){ sendHost({ t:'use', i, x:Math.round(x), y:Math.round(y) }); return; }
+  useItem(h, i, x, y);
+}
+$('inv').addEventListener('click', e => {
+  const b = e.target.closest('.inv'), h = state.human; if (!b || !h) return;
+  const aim = IS_TOUCH || !state.hasMouse ? { x:h.x + Math.cos(h.facing)*400, y:h.y + Math.sin(h.facing)*400 } : state.cursor;
+  useCmd(h, +b.dataset.slot, aim.x, aim.y);
+});
 function buildBar(){
+  buildInv();
   $('bar').innerHTML = ORDER.map(id => `<button type="button" class="slot" id="slot-${id}" data-spell="${id}" title="${SP[id].name} (${SP[id].key})"><span class="ic">${ICON[id]}</span><span class="k">${SP[id].key}</span><span class="lv"></span><span class="cd"></span><span class="cdt"></span></button>`).join('');
 }
 $('bar').addEventListener('click', e => {
@@ -1769,7 +2162,7 @@ function updateHud(){
   $('hRound').textContent = `Round ${state.round} of ${state.rounds}`;
   const cr = $('hCrumble');
   if (state.phase === 'fight'){
-    if (A.target > A.min){ const s = Math.ceil(A.next / GAME_SPEED); cr.textContent = `Ring crumbles in ${s}s`; cr.classList.toggle('warn', s <= 3); }
+    if (A.circR > A.min + 1){ const s = Math.ceil(A.next / GAME_SPEED); cr.textContent = `${A.up && A.up.sh.h.length ? 'Ring warps' : 'Ring crumbles'} in ${s}s`; cr.classList.toggle('warn', s <= 3); }
     else { cr.textContent = 'The ring can shrink no further'; cr.classList.remove('warn'); }
   } else cr.textContent = '';
   const board = standings().map(w => `<li class="${w.alive?'':'dead'}" style="--c:${w.color}"><i></i><span>${esc(w.name)}</span><b>${w.points}</b></li>`).join('');
@@ -1778,6 +2171,7 @@ function updateHud(){
   $('hHpFill').style.transform = `scaleX(${frac})`;
   $('hHpText').textContent = h.alive ? `${Math.ceil(h.hp)} / ${h.maxHp}` : 'Fallen';
   $('hGold').textContent = `${h.gold}g`;
+  updateInv(h);
   if (IS_TOUCH) updateTouch(h);
   drawMini();
   for (const id of ORDER){
@@ -1824,10 +2218,12 @@ $('btnRematch').addEventListener('click', () => { AU.init(); $('end').hidden = t
 // The room creator's browser is the authority: it runs the simulation and streams snapshots + effect events.
 // Guests send inputs (move target, casts, purchases, ready) and render what the host sends.
 const PROTO = 1, PFX = 'cinderring-v1-', SNAP_EVERY = 1/15, SHOP_SECS = 25;
-const PTYPES = ['fireball', 'homing', 'drain', 'drainBack', 'well'];
+const PTYPES = ['fireball', 'homing', 'drain', 'drainBack', 'well', 'bouncer', 'spray', 'swap'];
+const packSh = sh => [Math.round(sh.R*10)/10, ...sh.h.flat().map(v => Math.round(v*1000)/1000)];
+const unpackSh = a => { const h = []; for (let i = 1; i + 2 < a.length + 0; i += 3) h.push([a[i], a[i+1], a[i+2]]); return { R:a[0], h }; };
 const NET = { role:null, peer:null, hostConn:null, players:[], size:4, rounds:5, code:'', pub:false, myId:0,
   events:[], mute:0, seq:0, sendT:0, mvT:0, mvKey:'', ready:new Set(), shopUntil:0, byId:new Map(),
-  projs:new Map(), mets:new Map(), wells:new Map(), roster:null, dropped:new Map(), lastMsg:0, hbT:0 };
+  projs:new Map(), mets:new Map(), wells:new Map(), scos:new Map(), roster:null, dropped:new Map(), lastMsg:0, hbT:0 };
 const r1 = v => Math.round(v*10)/10;
 function rec(ev){ if (NET.role === 'host' && !NET.mute) NET.events.push(ev); }
 function addRing(r){ state.rings.push(r); rec(['r', r]); }
@@ -1837,7 +2233,7 @@ function addFlash(f){ state.flashes.push(f); rec(['fl', f]); }
 function addProj(p){ p.id = ++NET.seq; state.projectiles.push(p); }
 function addMeteor(m){ m.id = ++NET.seq; state.meteors.push(m); }
 function addWell(g){ g.id = ++NET.seq; state.wells.push(g); }
-for (const k of ['fire','boom','zap','blink','ward','orb','thrust','well','death','crumble','drain','heal']){
+for (const k of ['fire','boom','zap','blink','ward','orb','thrust','well','death','crumble','drain','heal','scourge']){
   const f = sfx[k]; sfx[k] = (...a) => { rec(['s', k, ...a]); f(...a); };
 }
 function playEvent(ev){
@@ -1859,14 +2255,16 @@ function cosmetics(dt){
   if (dt <= 0) return;
   NET.mute++;
   const A = state.arena;
-  if (A.r > A.target + .5){
-    if (Math.random() < .7) spawnDebris(Math.random()*TAU, A.r);
-    for (let i = 0; i < 3; i++){ const a = Math.random()*TAU; burst(Math.cos(a)*A.r, Math.sin(a)*A.r, 1, { col:Math.random()<.5?[255,140,50]:[50,34,30], sp:[10,60], life:[.6,1.3], size:[2,5], glow:Math.random()<.6, vx:Math.cos(a)*40, vy:Math.sin(a)*40, z:0, vz:[-40,40] }); }
+  if (A.k < 1){
+    if (Math.random() < .7){ const a = Math.random()*TAU; spawnDebris(a, edgeR(a)); }
+    for (let i = 0; i < 3; i++){ const a = Math.random()*TAU, er = edgeR(a); burst(Math.cos(a)*er, Math.sin(a)*er, 1, { col:Math.random()<.5?[255,140,50]:[50,34,30], sp:[10,60], life:[.6,1.3], size:[2,5], glow:Math.random()<.6, vx:Math.cos(a)*40, vy:Math.sin(a)*40, z:0, vz:[-40,40] }); }
   }
   for (const w of state.warlocks){
     if (!w.alive) continue;
     if (w.dash && Math.random() < .9) burst(w.x, w.y, 2, { col:w.rgb, sp:[10,50], life:[.2,.45], size:[2,4] });
-    if (hyp(w.x, w.y) > A.r && state.phase !== 'countdown' && Math.random() < .5) burst(w.x+rand(-10,10), w.y+rand(-10,10), 1, { col:[255,rand(90,170),40], sp:[10,40], life:[.3,.8], size:[2.5,5], z:LAVA_Y + rand(2,30), vz:[40,110] });
+    if (w.hasteT > 0 && Math.random() < .6) burst(w.x, w.y, 1, { col:[255,220,150], sp:[5,30], life:[.2,.4], size:[2,3.5], z:4, vz:[0,20] });
+    if (w.treadsT > 0 && Math.random() < .7) burst(w.x + rand(-8,8), w.y + rand(-8,8), 1, { col:[255,rand(90,160),30], sp:[5,20], life:[.25,.5], size:[2,4], z:2, vz:[20,60] });
+    if (inLavaAt(w.x, w.y, w.r*.6) && state.phase !== 'countdown' && Math.random() < .5) burst(w.x+rand(-10,10), w.y+rand(-10,10), 1, { col:[255,rand(90,170),40], sp:[10,40], life:[.3,.8], size:[2.5,5], z:LAVA_Y + rand(2,30), vz:[40,110] });
   }
   for (const p of state.projectiles){
     if (p.type === 'fireball'){
@@ -1881,6 +2279,10 @@ function cosmetics(dt){
   for (const g of state.wells){
     if (Math.random() < .9){ const a = Math.random()*TAU, r = g.rad*rand(.6,1); state.particles.push({ x:g.x+Math.cos(a)*r, y:g.y+Math.sin(a)*r, vx:-Math.cos(a)*r*1.4 - Math.sin(a)*60, vy:-Math.sin(a)*r*1.4 + Math.cos(a)*60, life:.6, max:.6, size:rand(1.5,3), col:[170,130,255], glow:true, drag:.5, z:rand(4,50), vz:0, grav:0 }); }
   }
+  for (const sc of state.scourges){
+    const o = sc.owner || NET.byId.get(sc.oid); if (!o || !o.alive) continue;
+    for (let i = 0; i < 3; i++){ const a = Math.random()*TAU, r = sc.rad*rand(.85, 1); state.particles.push({ x:o.x + Math.cos(a)*r, y:o.y + Math.sin(a)*r, vx:-Math.cos(a)*r*2.2, vy:-Math.sin(a)*r*2.2, life:.4, max:.4, size:rand(2,3.5), col:[255,60,20], glow:true, drag:.6, z:rand(3,14), vz:0, grav:0 }); }
+  }
   for (const m of state.meteors){
     const f = m.t/m.T; if (f > .03) burst(m.x + 220*f + rand(-14,14), m.y - 260*f + rand(-14,14), 4, { col:[255,rand(100,190),40], sp:[10,60], life:[.35,.8], size:[4,9], z:22 + 700*f + rand(-14,14), vz:[20,90] });
   }
@@ -1888,22 +2290,25 @@ function cosmetics(dt){
 }
 
 /* --- host side --- */
-const metaOf = w => ({ id:w.id, gold:w.gold, spells:w.spells, items:w.items, points:w.points, kills:w.kills, roundsWon:w.roundsWon,
+const metaOf = w => ({ id:w.id, gold:w.gold, spells:w.spells, inv:{ slots:w.inv.slots, items:w.inv.items }, points:w.points, kills:w.kills, roundsWon:w.roundsWon,
   lastGain:w.lastGain, lastPlace:w.lastPlace, roundKills:w.roundKills, roundDmg:Math.round(w.roundDmg), maxHp:w.maxHp });
 function applyMeta(list){
   for (const m of list){
     const w = NET.byId.get(m.id); if (!w) continue;
-    Object.assign(w, { gold:m.gold, spells:{ ...m.spells }, items:{ ...m.items }, points:m.points, kills:m.kills, roundsWon:m.roundsWon,
+    w.inv.slots = m.inv.slots; w.inv.items = m.inv.items.slice();
+    Object.assign(w, { gold:m.gold, spells:{ ...m.spells }, points:m.points, kills:m.kills, roundsWon:m.roundsWon,
       lastGain:m.lastGain, lastPlace:m.lastPlace, roundKills:m.roundKills, roundDmg:m.roundDmg, maxHp:m.maxHp });
   }
 }
 function broadcast(msg){ for (const p of NET.players) if (p.conn && p.conn.open) try { p.conn.send(msg); } catch {} }
 function snapshot(){
   const A = state.arena;
-  const s = { t:'s', ph:state.phase, pt:r1(state.phaseT), rd:state.round, ar:[r1(A.r), r1(A.target), r1(A.next), A.min, A.r0, A.step],
+  const s = { t:'s', ph:state.phase, pt:r1(state.phaseT), rd:state.round, ar:[r1(A.r), r1(A.target), r1(A.next), A.min, A.r0, A.step, Math.round(A.k*1000)/1000, A.count, A.circR, packSh(A.from), packSh(A.to), A.up ? packSh(A.up.sh) : null],
     w:state.warlocks.map(w => [w.id, r1(w.x), r1(w.y), Math.round(w.facing*100)/100, r1(w.hp), w.alive ? 1 : 0, r1(w.vx), r1(w.vy),
       w.shieldT > 0 ? r1(w.shieldT) : 0, w.dash ? 1 : 0, w.mx !== null ? 1 : 0, w.points, w.kills, w.roundsWon, r1(w.evx), r1(w.evy),
-      ORDER.map(id => r1(w.cd[id] || 0))]),
+      ORDER.map(id => r1(w.cd[id] || 0)), (w.invisT > 0 ? 1 : 0) | (w.treadsT > 0 ? 2 : 0) | (w.hasteT > 0 ? 4 : 0) | (w.watchT > 0 ? 8 : 0),
+      w.inv.icd.map(r1), w.inv.items, w.inv.slots, w.maxHp]),
+    sc:state.scourges.map(sc => [sc.id, sc.owner.id, r1(sc.t), sc.T, sc.rad]),
     p:state.projectiles.map(p => [p.id, PTYPES.indexOf(p.type), r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.owner.id]),
     m:state.meteors.map(m => [m.id, r1(m.x), r1(m.y), r1(m.t), m.T, m.rad]),
     g:state.wells.map(g => [g.id, r1(g.x), r1(g.y), r1(g.t), g.T, g.rad]),
@@ -1956,7 +2361,8 @@ function hostOnMsg(pl, m){
   switch (m.t){
     case 'mv': if (w && w.remote && w.alive){ if (m.p){ w.mx = m.p[0]; w.my = m.p[1]; } else w.mx = null; } break;
     case 'cast': if (w && w.remote && SP[m.id]) tryCast(w, m.id, +m.x, +m.y); break;
-    case 'buy': if (w && w.remote && state.phase === 'shop') buy(w, m.k === 'item' ? 'item' : 'spell', m.id); break;
+    case 'buy': if (w && w.remote && state.phase === 'shop' && ['spell','item','slot','sell'].includes(m.k)) buy(w, m.k, m.id); break;
+    case 'use': if (w && w.remote) useItem(w, +m.i, +m.x, +m.y); break;
     case 'ready': if (state.phase === 'shop'){ NET.ready.add(pl.id); checkShopReady(); } break;
   }
 }
@@ -2004,6 +2410,7 @@ function clientOnMsg(m){
     case 'round': {
       applyMeta(m.meta);
       state.round = m.round - 1; startRound();
+      state.map = m.map || { pits:[], trees:[] };
       for (const [id, x, y, f] of m.pos){ const w = NET.byId.get(id); if (w){ w.x = w.px = w.sx = x; w.y = w.py = w.sy = y; w.facing = w.sf = f; w.sevx = w.sevy = 0; } }
       NET.projs.clear(); NET.mets.clear(); NET.wells.clear(); NET.mvKey = '';
       $('shop').hidden = true; buildBar();
@@ -2024,7 +2431,8 @@ function applySnap(s){
   const prev = state.phase;
   if (NET.inLobby || ['shop', 'matchEnd', 'waiting'].includes(state.phase)) return;
   state.phase = s.ph; state.phaseT = s.pt; state.round = s.rd;
-  const A = state.arena; [A.r, A.target, A.next, A.min, A.r0, A.step] = s.ar;
+  const A = state.arena; [A.r, A.target, A.next, A.min, A.r0, A.step, A.k, A.count, A.circR] = s.ar;
+  A.from = unpackSh(s.ar[9]); A.to = unpackSh(s.ar[10]); A.up = s.ar[11] ? { sh:unpackSh(s.ar[11]) } : null;
   if (prev === 'countdown' && s.ph === 'fight'){ banner('Fight', '', .7); sfx.go(); }
   for (const e of s.w){
     const w = NET.byId.get(e[0]); if (!w) continue;
@@ -2038,6 +2446,9 @@ function applySnap(s){
     if (w !== state.human) w.mx = e[10] ? 1 : null;
     w.points = e[11]; w.kills = e[12]; w.roundsWon = e[13]; w.sevx = e[14]; w.sevy = e[15];
     ORDER.forEach((id, i) => { const v = e[16][i]; if (v > (w.cd[id] || 0) + .05) w.cdMax[id] = v; w.cd[id] = v; });
+    const bits = e[17]; w.invisT = bits & 1 ? 1 : 0; w.treadsT = bits & 2 ? 1 : 0; w.hasteT = bits & 4 ? 1 : 0; w.watchT = bits & 8 ? 1 : 0;
+    e[18].forEach((v, i) => { if (v > (w.inv.icd[i] || 0) + .05) w.inv.icdMax[i] = v; w.inv.icd[i] = v; });
+    w.inv.items = e[19]; w.inv.slots = e[20]; w.maxHp = e[21];
     w.snapAge = 0;
   }
   const upd = (map, rows, make, set) => {
@@ -2049,6 +2460,7 @@ function applySnap(s){
   state.projectiles = upd(NET.projs, s.p, r => ({ id:r[0], type:PTYPES[r[1]], spin:0, owner:NET.byId.get(r[6]) || state.warlocks[0] }),
     (p, r) => { p.x = r[2]; p.y = r[3]; p.vx = r[4]; p.vy = r[5]; const o = NET.byId.get(r[6]); if (o) p.owner = o; });
   state.meteors = upd(NET.mets, s.m, r => ({ id:r[0] }), (m, r) => { m.x = r[1]; m.y = r[2]; m.t = r[3]; m.T = r[4]; m.rad = r[5]; });
+  state.scourges = upd(NET.scos, s.sc || [], r => ({ id:r[0] }), (sc, r) => { sc.owner = NET.byId.get(r[1]); sc.t = r[2]; sc.T = r[3]; sc.rad = r[4]; });
   state.wells = upd(NET.wells, s.g, r => ({ id:r[0], spin:0 }), (g, r) => { g.x = r[1]; g.y = r[2]; g.t = r[3]; g.T = r[4]; g.rad = r[5]; });
   for (const ev of s.e) playEvent(ev);
 }
@@ -2064,7 +2476,7 @@ function clientStep(rdt, dt){
       if (w.mx !== null && state.phase === 'fight'){
         const dx = w.mx - w.x, dy = w.my - w.y, d = hyp(dx, dy);
         if (d < 3) w.mx = null;
-        else { const ctrl = clamp(1 - hyp(w.vx, w.vy)/320, .15, 1), st = Math.min(d, 150*(1 + .12*w.items.boots)*ctrl*dt); w.x += dx/d*st; w.y += dy/d*st; w.facing = turnToward(w.facing, Math.atan2(dy, dx), 12*dt); }
+        else { const ctrl = clamp(1 - hyp(w.vx, w.vy)/320, .15, 1), st = Math.min(d, speedOf(w)*ctrl*dt); w.x += dx/d*st; w.y += dy/d*st; w.facing = turnToward(w.facing, Math.atan2(dy, dx), 12*dt); }
       }
       const ex = w.sx - w.x, ey = w.sy - w.y;
       if (hyp(ex, ey) > 150){ w.x = w.sx; w.y = w.sy; } else { const k = Math.min(1, rdt*(w.mx !== null ? 2.5 : 6)); w.x += ex*k; w.y += ey*k; }
@@ -2078,6 +2490,7 @@ function clientStep(rdt, dt){
   }
   for (const p of state.projectiles){ p.x += (p.vx || 0)*dt; p.y += (p.vy || 0)*dt; p.spin += dt*8; }
   for (const m of state.meteors) m.t = Math.max(0, m.t - dt);
+  for (const sc of state.scourges) sc.t = Math.max(0, sc.t - dt);
   for (const g of state.wells){ g.t -= dt; g.spin += dt*3; }
   cosmetics(dt);
 }
@@ -2240,7 +2653,7 @@ function netShutdown(){
   if (was === 'host') broadcast({ t:'bye' });
   try { NET.peer && NET.peer.destroy(); } catch {}
   Object.assign(NET, { role:null, peer:null, hostConn:null, players:[], events:[], ready:new Set(), roster:null, inLobby:false, rejoining:false, dropped:new Map() });
-  NET.projs.clear(); NET.mets.clear(); NET.wells.clear();
+  NET.projs.clear(); NET.mets.clear(); NET.wells.clear(); NET.scos.clear();
 }
 function hostGone(){
   if (NET.rejoining || NET.role !== 'client') return;
@@ -2343,7 +2756,7 @@ function project(x, h, y){
 function disposeObj(o){
   o.traverse(c => { if (c.material && !c.material.userData.shared) c.material.dispose(); if (c.userData.ownGeo && c.geometry) c.geometry.dispose(); });
 }
-const prevSets = { proj:new Set(), well:new Set(), met:new Set(), ring:new Set(), bolt:new Set() };
+const prevSets = { proj:new Set(), well:new Set(), met:new Set(), ring:new Set(), bolt:new Set(), sco:new Set() };
 function sync(list, create, update, setName){
   const seen = new Set();
   for (const o of list){
@@ -2521,6 +2934,7 @@ function buildActors(){
     const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(42, 1), additive(0x8fd8ff, .55, { wireframe:true }));
     shield.userData.ownGeo = true; shield.position.y = 40; shield.visible = false; group.add(shield);
     const shieldFill = glow(0x8fd8ff, 90, .35); shieldFill.scale.set(3, 3, 1); shield.add(shieldFill);
+    const ghost = glow(0x8fe3ff, 120, 0); ghost.position.y = 36; group.add(ghost);
     scene.add(group);
 
     const label = document.createElement('div');
@@ -2528,7 +2942,7 @@ function buildActors(){
     label.innerHTML = `${w.human ? '' : `<span class="n">${esc(w.name)}</span>`}<span class="b"><i></i></span>`;
     labelsEl.appendChild(label);
     w.actor = { group, root, hips, spine, upper, head, legs, skirt, skirtGeo, skirtBase:skirtGeo.attributes.position.array.slice(), cloak, cloakGeo,
-      armR, armL, handR, handL, staff, gemGlow, tabPivot, sel, shield, label, bar:label.querySelector('i'),
+      armR, armL, handR, handL, staff, gemGlow, tabPivot, sel, shield, ghost, label, bar:label.querySelector('i'),
       flashMats:[robeMat, clothMat], lx:w.x, ly:w.y, phase:Math.random()*TAU, walk:0, flare:0, lat:0, kn:0, castT:0,
       shR:new THREE.Vector3(-.5, 48.5, -12.5), shL:new THREE.Vector3(-.5, 48.5, 12.5), hR:new THREE.Vector3(), hL:new THREE.Vector3() };
     w.visY = 0;
@@ -2625,6 +3039,8 @@ function animateActor(w, a, dt, inLava){
 }
 
 /* effects */
+const PROJ_MAT = { bouncer:new THREE.MeshBasicMaterial({ color:0xffe0a0 }), swap:new THREE.MeshBasicMaterial({ color:0xdcecff }) };
+Object.values(PROJ_MAT).forEach(m => m.userData.shared = true);
 function makeProj(p){
   const g = new THREE.Group();
   if (p.type === 'fireball'){
@@ -2636,6 +3052,14 @@ function makeProj(p){
     const tail = new THREE.Mesh(METEOR.tailGeo, METEOR.fireTail); tail.scale.set(10, 66, 10); tail.position.y = 33; halo.add(tail);
     g.add(glow(0xff6a18, 76, .55), glow(0xffd28a, 28, .7));
     g.userData = { halo, core, shell };
+  } else if (p.type === 'spray'){
+    const core = new THREE.Mesh(GEO.sphere, METEOR.fireCore); core.scale.setScalar(3.6); g.add(core);
+    g.add(glow(0xff7a20, 36, .65));
+  } else if (p.type === 'bouncer' || p.type === 'swap'){
+    const b = p.type === 'bouncer';
+    const core = new THREE.Mesh(GEO.sphere, b ? PROJ_MAT.bouncer : PROJ_MAT.swap); core.scale.setScalar(b ? 6 : 5.5); g.add(core);
+    const ring = new THREE.Mesh(GEO.torus, additive(b ? 0xffc060 : 0x7ab8ff, .9)); ring.scale.setScalar(b ? 13 : 12); g.add(ring); g.userData.ring = ring;
+    g.add(glow(b ? 0xffa030 : 0x5a9cff, 62, .6));
   } else if (p.type === 'drain' || p.type === 'drainBack'){
     const core = new THREE.Mesh(GEO.sphere, METEOR.drainCore); core.scale.setScalar(5.5); g.add(core);
     const shell = new THREE.Mesh(GEO.sphere, METEOR.drainShell); shell.scale.setScalar(11); g.add(shell);
@@ -2776,6 +3200,69 @@ function updMeteor(m, g){
   u.rockG.position.set(m.x + 220*f, 22 + 700*f, m.y - 260*f);
   u.rock.rotation.x += u.spin.x*.016; u.rock.rotation.y += u.spin.y*.016; u.rock.rotation.z += u.spin.z*.016;
 }
+/* map obstacles: charred trees (solid) and square lava pits, rebuilt whenever the round's map changes */
+const OBS = {
+  bark: new THREE.MeshStandardMaterial({ color:0x2a1d16, roughness:1, flatShading:true }),
+  ember: new THREE.MeshBasicMaterial({ color:0xff8a30 }),
+  frame: new THREE.MeshStandardMaterial({ color:0x302520, roughness:1, flatShading:true }),
+  box: new THREE.BoxGeometry(1, 1, 1),
+  pitLava: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI/2),
+  trunk: (() => { const g = new THREE.CylinderGeometry(6.5, 13, 64, 8, 4); const p = g.attributes.position; for (let i = 0; i < p.count; i++){ const k = 1 + (hash1(i*1.7) - .5)*.25; p.setX(i, p.getX(i)*k); p.setZ(i, p.getZ(i)*k); } g.translate(0, 32, 0); g.computeVertexNormals(); return g; })(),
+  branch: new THREE.CylinderGeometry(1, 3.8, 1, 5).translate(0, .5, 0),
+  root: new THREE.ConeGeometry(5, 1, 5).translate(0, .5, 0),
+};
+[OBS.bark, OBS.ember, OBS.frame, lavaMat].forEach(m => m.userData.shared = true);
+// the same tree for every player (seedless), turned to face the centre, so no seat gets a different obstacle
+function makeTree(t){
+  const g = new THREE.Group(); g.position.set(t.x, 0, t.y); g.rotation.y = -Math.atan2(t.y, t.x);
+  const trunk = new THREE.Mesh(OBS.trunk, OBS.bark); trunk.castShadow = true; g.add(trunk);
+  for (const [len, y, rx, rz, ry] of [[36, 48, .25, .95, 0], [32, 55, -.5, -.75, .6], [26, 42, .9, -.2, 1.9], [22, 61, -.3, .35, 2.8], [18, 36, .5, .7, 4.1]]){
+    const b = new THREE.Mesh(OBS.branch, OBS.bark); b.scale.set(1, len, 1); b.position.y = y; b.rotation.set(rx, ry, rz); b.castShadow = true; g.add(b);
+  }
+  for (let i = 0; i < 4; i++){ const r = new THREE.Mesh(OBS.root, OBS.bark); r.scale.set(1.1, 20, .8); r.position.set(Math.cos(i*1.7)*7, 3, Math.sin(i*1.7)*7); r.rotation.set(0, -i*1.7, Math.PI/2 - .3); g.add(r); }
+  for (const [x, y, z] of [[3, 22, 5], [-4, 38, 3], [2, 50, -4]]){ const e = new THREE.Mesh(GEO.sphere, OBS.ember); e.scale.setScalar(1.4); e.position.set(x, y, z); g.add(e); }
+  const gl = glow(0xff6a20, 40, .5); gl.position.y = 30; g.add(gl);
+  return g;
+}
+function makePit(p){
+  const g = new THREE.Group(); g.position.set(p.x, 0, p.y); g.rotation.y = -p.a; g.userData.pit = true;
+  const lava = new THREE.Mesh(OBS.pitLava, lavaMat); lava.scale.set(p.s, 1, p.s); lava.position.y = .6; g.add(lava);
+  const h = p.s/2 + 2.5;
+  for (const [x, z, w, d] of [[0, -h, p.s + 10, 5], [0, h, p.s + 10, 5], [-h, 0, 5, p.s], [h, 0, 5, p.s]]){
+    const b = new THREE.Mesh(OBS.box, OBS.frame); b.scale.set(w, 6, d); b.position.set(x, 2, z); b.castShadow = b.receiveShadow = true; g.add(b);
+  }
+  const gl = glow(0xff6a20, 95, .55); gl.position.y = 8; g.add(gl);
+  return g;
+}
+let mapGroup = null, mapRef = null;
+function updateMap(){
+  // pits swallowed by the shrinking ring disappear (they are lava already)
+  if (mapGroup) for (const c of mapGroup.children) if (c.userData.pit) c.visible = hyp(c.position.x, c.position.z) < edgeAt(c.position.x, c.position.z) - 8;
+  if (state.map === mapRef) return;
+  mapRef = state.map;
+  if (mapGroup){ scene.remove(mapGroup); disposeObj(mapGroup); }
+  mapGroup = new THREE.Group();
+  for (const t of state.map.trees) mapGroup.add(makeTree(t));
+  for (const p of state.map.pits) mapGroup.add(makePit(p));
+  scene.add(mapGroup);
+}
+// Scourge charge: a ring around the caster that closes in until the blast
+function makeSco(sc){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(GEO.ring, additive(0xff3a18, .8)); ring.position.y = 1.6;
+  const fill = new THREE.Mesh(GEO.disk, additive(0x801008, .15)); fill.position.y = 1.4;
+  const core = new THREE.Mesh(GEO.ring, additive(0xffb070, .9)); core.position.y = 1.8;
+  g.add(ring, fill, core); g.userData = { ring, fill, core };
+  return g;
+}
+function updSco(sc, g){
+  const o = sc.owner; if (!o) return;
+  const k = 1 - sc.t/sc.T, u = g.userData;
+  g.position.set(o.x, Math.max(0, o.visY || 0), o.y);
+  u.ring.scale.set(sc.rad, 1, sc.rad); u.fill.scale.set(sc.rad, 1, sc.rad);
+  u.fill.material.opacity = .1 + .3*k; u.ring.material.opacity = .5 + .4*Math.sin(state.time*25);
+  const cr = Math.max(.01, sc.rad*(1 - k)); u.core.scale.set(cr, 1, cr);
+}
 function makeRing(r){
   const m = new THREE.Mesh(GEO.ring, additive(new THREE.Color(`rgb(${r.col})`), 1));
   m.position.set(r.x, r.h ?? 2, r.y); return m;
@@ -2874,35 +3361,33 @@ function render3D(){
   camUpdate(dt);
   const A = state.arena, r = A.r, C = state.cam;
   lavaMat.uniforms.uTime.value = state.time; lavaMat.uniforms.uR.value = A.r; fxTime.value = state.time;
-  platformTop.scale.set(r, r, 1);
-  groundTex.repeat.set(2*r/TILE_W, 2*r/TILE_H); groundTex.offset.set(-r/TILE_W, -r/TILE_H);
-  platformSide.scale.set(r, 1, r);
+  updateArenaGeo(); updateMap();
   // the camera follows the player, so re-read the world point under a still mouse
   if (state.hasMouse && !IS_TOUCH){
     state.cursor = toWorld(state.mouse.x, state.mouse.y);
     const h0 = state.human;
     if (state.rmb && h0 && h0.alive && state.phase === 'fight'){ h0.mx = state.cursor.x; h0.my = state.cursor.y; }
   }
-  setRim(A.r); heat.scale.set(A.r, 1, A.r); updateCurb(A, dt);
-  wallTex.repeat.set(Math.round(TAU*r/BRICK_W), 110/BRICK_H);
+  updateCurb(A, dt);
   rim.material.color.setRGB(1, .55 + .1*Math.sin(state.time*3), .25);
-  if (state.phase === 'fight' && A.target > A.min && A.next < 3){
-    const nr = Math.max(A.min, A.target - A.step);
-    crumbleRing.visible = true; crumbleRing.scale.set(nr, 1, nr); crumbleRing.material.opacity = .45 + .35*Math.sin(state.time*10);
+  if (state.phase === 'fight' && A.circR > A.min + 1 && A.next < 3 && A.up){
+    updatePreview(A.up.sh); crumbleRing.visible = true; crumbleRing.material.opacity = .45 + .35*Math.sin(state.time*10);
   } else crumbleRing.visible = false;
 
   // warlocks
   for (const w of state.warlocks){
     const a = w.actor; if (!a) continue;
-    const near = hyp(w.x - C.fx, w.y - C.fy) < C.viewR*1.9;
-    a.group.visible = w.alive && near; a.label.hidden = !w.alive || !near;
+    const near = hyp(w.x - C.fx, w.y - C.fy) < C.viewR*1.9, unseen = w.invisT > 0 && w !== state.human;
+    a.group.visible = w.alive && near && !unseen; a.label.hidden = !w.alive || !near || unseen;
     if (!w.alive || !near){ a.lx = w.x; a.ly = w.y; continue; }
-    const inLava = hyp(w.x, w.y) > A.r + 4;
-    const tY = inLava ? LAVA_Y + 4 : Math.min(18, hyp(w.vx, w.vy)*.03);
+    const off = hyp(w.x, w.y) > edgeAt(w.x, w.y) + 4, inLava = off || inPit(w.x, w.y, w.r*.6);
+    const tY = off ? LAVA_Y + 4 : Math.min(18, hyp(w.vx, w.vy)*.03);
     w.visY += (tY - w.visY)*Math.min(1, dt*10);
     a.group.position.set(w.x, w.visY, w.y);
     a.root.rotation.y = -w.facing;
     animateActor(w, a, dt, inLava);
+    a.root.visible = !(w.invisT > 0);
+    a.ghost.material.opacity = w.invisT > 0 ? .3 + .15*Math.sin(state.time*9) : 0;
     a.sel.visible = !inLava;
     if (w.human) a.sel.rotation.y = state.time*.8;
     a.shield.visible = w.shieldT > 0;
@@ -2917,6 +3402,7 @@ function render3D(){
   sync(state.projectiles, makeProj, updProj, 'proj');
   sync(state.wells, makeWell, updWell, 'well');
   sync(state.meteors, makeMeteor, updMeteor, 'met');
+  sync(state.scourges, makeSco, updSco, 'sco');
   sync(state.rings, makeRing, updRing, 'ring');
   sync(state.bolts, makeBolt, updBolt, 'bolt');
 
@@ -2926,6 +3412,8 @@ function render3D(){
     if (p.type === 'fireball') cands.push({ x:p.x, y:30, z:p.y, c:0xff8a30, i:1.6 });
     else if (p.type === 'homing') cands.push({ x:p.x, y:30, z:p.y, c:parseInt(p.owner.color.slice(1), 16), i:2 });
     else if (p.type === 'drain' || p.type === 'drainBack') cands.push({ x:p.x, y:30, z:p.y, c:0x4dff85, i:1.3 });
+    else if (p.type === 'bouncer') cands.push({ x:p.x, y:30, z:p.y, c:0xffb040, i:1.4 });
+    else if (p.type === 'swap') cands.push({ x:p.x, y:30, z:p.y, c:0x6aa8ff, i:1.2 });
   }
   for (const m of state.meteors){ const f = m.t/m.T; cands.push({ x:m.x + 220*f, y:30 + 700*f, z:m.y - 260*f, c:0xff6a20, i:3 + (1 - f)*4 }); }
   for (const fl of state.flashes) cands.push({ x:fl.x, y:fl.z, z:fl.y, c:fl.col, i:fl.i*(fl.t/fl.T) });
@@ -2938,7 +3426,7 @@ function render3D(){
   if (h && h.alive && state.armed && state.phase === 'fight'){
     const id = state.armed, s = SP[id], L = h.spells[id] - 1, c = state.cursor;
     let range = 640;
-    if (id === 'lightning' || id === 'blink') range = s.range[L];
+    if (id === 'lightning' || id === 'blink' || id === 'swap') range = s.range[L];
     else if (id === 'meteor' || id === 'gravity') range = s.range;
     else if (id === 'thrust') range = s.dist[L];
     aimRing.visible = aimLine.visible = true;
@@ -2982,7 +3470,7 @@ function render3D(){
   if (composerReady) composer.render(); else renderer.render(scene, camera);
 
   // lava screen tint while the human burns
-  $('burn').classList.toggle('on', !!(h && h.alive && hyp(h.x, h.y) > A.r && state.phase === 'fight'));
+  $('burn').classList.toggle('on', !!(h && h.alive && inLavaAt(h.x, h.y, h.r*.6) && !(h.treadsT > 0) && state.phase === 'fight'));
 }
 
 /* ---------- boot ---------- */
