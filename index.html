@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="A 3D Warlock arena brawl in your browser. Knock rival warlocks into the lava with 8 spells. Last one standing wins. Free, no install.">
 <meta name="theme-color" content="#0d0908">
 <link rel="canonical" href="https://borabasol.github.io/cinder-ring/">
@@ -53,7 +53,8 @@
 [hidden]{display:none!important}
 html,body{height:100%}
 body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:15px;overflow:hidden;-webkit-font-smoothing:antialiased}
-#game{position:relative;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none}
+#game{position:relative;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-touch-callout:none}
+html,body{overscroll-behavior:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
@@ -72,7 +73,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 @media (prefers-reduced-motion: reduce){#burn.on{animation:none}}
 
 /* overlays */
-.overlay{position:absolute;inset:0;overflow:auto;padding:24px 16px;display:flex;align-items:center;z-index:5}
+.overlay{position:absolute;inset:0;overflow:auto;padding:24px 16px;display:flex;align-items:flex-start;z-index:5;touch-action:pan-y}
+.title-card{margin-block:auto}
 #title{background:linear-gradient(90deg,rgba(13,9,8,.96) 0%,rgba(13,9,8,.88) 34%,rgba(13,9,8,.15) 62%,rgba(13,9,8,0) 100%)}
 .title-card{max-width:440px;margin-left:clamp(0px,6vw,90px);display:flex;flex-direction:column;gap:18px}
 .title-card h1{font-family:var(--display);font-weight:400;font-size:clamp(52px,9vw,88px);line-height:.88;margin:0;letter-spacing:.01em;text-wrap:balance;color:var(--ink);text-shadow:0 0 28px rgba(255,106,31,.35)}
@@ -190,6 +192,45 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
 #banner span{display:block;margin-top:8px;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;font-size:13px;font-weight:600;text-shadow:0 1px 3px #000}
 .aim-hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(128px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--ink);background:rgba(20,12,10,.85);border:1px solid var(--line-hot);padding:3px 10px;border-radius:3px;pointer-events:none}
 
+/* minimap */
+#mini{position:absolute;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:rgba(10,6,5,.55);border:1px solid var(--line);pointer-events:none}
+
+/* touch controls */
+.t-only{display:none}
+#game.touch .t-only{display:block}
+#touch{position:absolute;inset:0;pointer-events:none}
+#joyZone{position:absolute;left:0;bottom:0;width:55%;height:62%;pointer-events:auto;touch-action:none}
+#joyBase{position:absolute;left:calc(86px + env(safe-area-inset-left,0px));top:calc(100% - 92px - env(safe-area-inset-bottom,0px));width:124px;height:124px;margin:-62px 0 0 -62px;border-radius:50%;background:radial-gradient(circle,rgba(255,140,60,.1),rgba(20,12,10,.55) 70%);border:2px solid rgba(255,190,130,.32);opacity:.65;transition:opacity .15s}
+#joyBase.active{opacity:1;transition:none}
+#joyKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffbe7a,#d9460f 72%);box-shadow:0 0 18px rgba(255,110,30,.5),inset 0 -3px 6px rgba(0,0,0,.35)}
+#tpad{position:absolute;right:calc(60px + env(safe-area-inset-right,0px));bottom:calc(60px + env(safe-area-inset-bottom,0px));width:0;height:0}
+.tb{position:absolute;left:0;top:0;width:60px;height:60px;padding:0;transform:translate(calc(var(--x) - 50%),calc(var(--y) - 50%));border-radius:50%;border:2px solid var(--line-hot);background:radial-gradient(circle at 50% 35%,#3a1d14,#140b09);color:var(--ember);display:grid;place-items:center;pointer-events:auto;touch-action:none;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.tb svg{width:28px;height:28px;position:relative;z-index:0}
+.tb.main{width:88px;height:88px;border-color:var(--lava);box-shadow:0 0 22px rgba(255,100,30,.35),0 4px 14px rgba(0,0,0,.45)}
+.tb.main svg{width:42px;height:42px}
+.tb.ready{border-color:var(--ember)}
+.tb.press{filter:brightness(1.45)}
+.tb.cancel{border-color:var(--bad);filter:grayscale(.6)}
+.tb .cd{position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(8,5,4,.8) calc(var(--p,0)*360deg),transparent 0)}
+.tb .cdt{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:18px;color:var(--ink);text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
+#game.touch #bar,#game.touch #feed,#game.touch .aim-hint,#game.touch #hBoard{display:none}
+#game.touch .hud-top{top:calc(8px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));right:calc(10px + env(safe-area-inset-right,0px))}
+#game.touch .hud-left{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+#game.touch .hud-round b{font-size:15px}
+#game.touch .hud-round span{display:none}
+#game.touch .hud-btns button{padding:7px 11px;font-size:13px}
+#game.touch .hud-bottom{top:calc(50px + env(safe-area-inset-top,0px));bottom:auto;left:50%;right:auto;transform:translateX(-50%);width:min(56vw,280px);padding:0}
+#game.touch .vitals{width:100%}
+#game.touch #mini{left:calc(10px + env(safe-area-inset-left,0px));top:calc(78px + env(safe-area-inset-top,0px));bottom:auto;width:94px;height:94px}
+@media (max-width:560px){
+  .cards{grid-template-columns:1fr 1fr;gap:8px}
+  .cards.items{grid-template-columns:1fr 1fr}
+  .card{padding:10px}
+  .card p{font-size:12.5px}
+  .card .stats{display:none}
+  .card-head h4{font-size:15px}
+}
+
 @media (max-width:760px){
   .shop-grid{grid-template-columns:1fr}
   .shop{padding:16px}
@@ -221,12 +262,18 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
           <button id="btnPause" type="button">Pause</button>
           <button id="btnMute" type="button">Sound on</button>
           <button id="btnFast" type="button" aria-pressed="false" hidden>Fast-forward</button>
+          <button id="btnFull" type="button" hidden>Full screen</button>
         </div>
       </div>
       <ol id="hBoard"></ol>
     </div>
     <ul id="feed"></ul>
     <div class="aim-hint" id="aimHint" hidden></div>
+    <canvas id="mini" aria-label="Minimap"></canvas>
+    <div id="touch" hidden>
+      <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
+      <div id="tpad"></div>
+    </div>
     <div class="hud-bottom">
       <div class="vitals"><div class="hp"><i id="hHpFill"></i><span id="hHpText">100</span></div><span class="gold" id="hGold">0g</span></div>
       <div id="bar"></div>
@@ -260,6 +307,7 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
       <details class="howto" id="howto">
         <summary>How to play</summary>
         <dl>
+          <dt class="t-only">Phone</dt><dd class="t-only">Drag the left stick to walk. Tap a spell to fire it at the nearest rival, or drag it to aim and let go to cast. Drag back to the button to cancel.</dd>
           <dt>Move</dt><dd>Right-click (or tap) the ground. Hold right-click to steer.</dd>
           <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
           <dt>Lava</dt><dd>Burns 14 HP a second. The lower your HP, the farther every hit throws you.</dd>
@@ -316,6 +364,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const hyp = Math.hypot;
 const $ = id => document.getElementById(id);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
 
 /* ---------- data ---------- */
 const SP = {
@@ -432,92 +481,80 @@ const wellTex = canvasTex(256, (g, s) => {
   }
 });
 
-const GROUND_R = 540;
-// Three canvases share every stone: colour, height (bump) and glow (lava seeping between stones + runes).
-function makeGround(){
-  const R = GROUND_R, s = 1.6, size = Math.ceil(2*R*s);
-  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); g.scale(s, s); g.translate(R, R); return [c, g]; };
+// Ground: one seamless tile of hex basalt stones (colour, height and glow maps), repeated in world space,
+// so the arena can be any size and stays equally sharp. The rune seal is its own decal.
+const HEX = 30, HEX_W = Math.sqrt(3)*HEX, HEX_H = 1.5*HEX, TILE_C = 8, TILE_R = 8;
+const TILE_W = TILE_C*HEX_W, TILE_H = TILE_R*HEX_H;
+function makeGroundTile(){
+  const s = IS_TOUCH ? 1.9 : 2.4, cw = Math.ceil(TILE_W*s), ch = Math.ceil(TILE_H*s);
+  const mk = () => { const c = document.createElement('canvas'); c.width = cw; c.height = ch; const g = c.getContext('2d'); g.scale(cw/TILE_W, ch/TILE_H); return [c, g]; };
   const [c, g] = mk(), [hc, hg] = mk(), [rc, rg] = mk();
   const nz = document.createElement('canvas'); nz.width = nz.height = 128;
   { const x = nz.getContext('2d'), im = x.createImageData(128, 128); for (let i = 0; i < im.data.length; i += 4){ const v = Math.random()*255; im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255; } x.putImageData(im, 0, 0); }
   const grain = g.createPattern(nz, 'repeat');
-
-  g.fillStyle = '#110906'; g.fillRect(-R, -R, 2*R, 2*R);
-  hg.fillStyle = '#000'; hg.fillRect(-R, -R, 2*R, 2*R);
-  const eg = rg.createRadialGradient(0, 0, 0, 0, 0, R);
-  eg.addColorStop(0, 'rgb(22,5,0)'); eg.addColorStop(.72, 'rgb(60,13,2)'); eg.addColorStop(1, 'rgb(150,36,5)');
-  rg.fillStyle = eg; rg.fillRect(-R, -R, 2*R, 2*R);
+  g.fillStyle = '#110906'; g.fillRect(0, 0, TILE_W, TILE_H);
+  hg.fillStyle = '#000'; hg.fillRect(0, 0, TILE_W, TILE_H);
+  rg.fillStyle = 'rgb(58,13,2)'; rg.fillRect(0, 0, TILE_W, TILE_H);
 
   const tones = [[62,54,50],[74,56,46],[44,38,36],[80,50,38],[56,52,52]];
-  const hs = 30, hw = Math.sqrt(3)*hs, hh = 1.5*hs;
-  const rows = Math.ceil(R/hh)+1, cols = Math.ceil(R/hw)+1;
-  for (let row = -rows; row <= rows; row++) for (let col = -cols; col <= cols; col++){
-    const cx = col*hw + (row & 1 ? hw/2 : 0) + rand(-4, 4), cy = row*hh + rand(-4, 4);
-    if (hyp(cx, cy) > R + hs) continue;
-    const path = new Path2D();
-    for (let k = 0; k < 6; k++){ const a = Math.PI/6 + k*TAU/6 + rand(-.09, .09), rr = hs*rand(.82, .93); const px = cx + Math.cos(a)*rr, py = cy + Math.sin(a)*rr; k ? path.lineTo(px, py) : path.moveTo(px, py); }
-    path.closePath();
-    const base = tones[(Math.random()*tones.length)|0], v = rand(.85, 1.15);
-    const sg = g.createLinearGradient(cx - hs, cy - hs, cx + hs, cy + hs);
-    sg.addColorStop(0, `rgb(${base[0]*v*1.22|0},${base[1]*v*1.22|0},${base[2]*v*1.22|0})`);
-    sg.addColorStop(1, `rgb(${base[0]*v*.72|0},${base[1]*v*.72|0},${base[2]*v*.72|0})`);
+  const stones = [];
+  for (let row = 0; row < TILE_R; row++) for (let col = 0; col < TILE_C; col++){
+    const cx = col*HEX_W + (row & 1 ? HEX_W/2 : 0) + rand(-4, 4), cy = row*HEX_H + rand(-4, 4);
+    const pts = []; for (let k = 0; k < 6; k++){ const a = Math.PI/6 + k*TAU/6 + rand(-.09, .09), rr = HEX*rand(.82, .93); pts.push([cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]); }
+    const blobs = Array.from({ length:3 }, () => [cx + rand(-HEX, HEX)*.6, cy + rand(-HEX, HEX)*.6, rand(6, 16), Math.random() < .6]);
+    let crack = null;
+    if (Math.random() < .55){
+      const a0 = Math.random()*TAU; let px = cx + Math.cos(a0)*HEX*.85, py = cy + Math.sin(a0)*HEX*.85; const dir = a0 + Math.PI + rand(-.5, .5);
+      crack = [[px, py]]; for (let k = 0; k < 4; k++){ px += Math.cos(dir + rand(-.6, .6))*rand(5, 10); py += Math.sin(dir + rand(-.6, .6))*rand(5, 10); crack.push([px, py]); }
+    }
+    stones.push({ cx, cy, pts, base:tones[(Math.random()*tones.length)|0], v:rand(.85, 1.15), blobs, crack, hv:150 + Math.random()*70 | 0 });
+  }
+  const pathOf = (pts, dx, dy, close) => { const p = new Path2D(); pts.forEach(([x, y], i) => i ? p.lineTo(x + dx, y + dy) : p.moveTo(x + dx, y + dy)); if (close) p.closePath(); return p; };
+  for (const st of stones) for (const dx of [-TILE_W, 0, TILE_W]) for (const dy of [-TILE_H, 0, TILE_H]){
+    const cx = st.cx + dx, cy = st.cy + dy;
+    if (cx < -HEX*1.2 || cx > TILE_W + HEX*1.2 || cy < -HEX*1.2 || cy > TILE_H + HEX*1.2) continue;
+    const path = pathOf(st.pts, dx, dy, true), b = st.base, v = st.v;
+    const sg = g.createLinearGradient(cx - HEX, cy - HEX, cx + HEX, cy + HEX);
+    sg.addColorStop(0, `rgb(${b[0]*v*1.22|0},${b[1]*v*1.22|0},${b[2]*v*1.22|0})`); sg.addColorStop(1, `rgb(${b[0]*v*.72|0},${b[1]*v*.72|0},${b[2]*v*.72|0})`);
     g.fillStyle = sg; g.fill(path);
     g.save(); g.clip(path);
-    g.globalCompositeOperation = 'overlay'; g.globalAlpha = .22; g.fillStyle = grain; g.fillRect(cx - hs, cy - hs, hs*2, hs*2);
+    g.globalCompositeOperation = 'overlay'; g.globalAlpha = .22; g.fillStyle = grain; g.fillRect(cx - HEX, cy - HEX, HEX*2, HEX*2);
     g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
-    for (let k = 0; k < 3; k++){
-      const bx = cx + rand(-hs, hs)*.6, by = cy + rand(-hs, hs)*.6, br = rand(6, 16), dark = Math.random() < .6;
-      const bg = g.createRadialGradient(bx, by, 0, bx, by, br);
+    for (const [bx0, by0, br, dark] of st.blobs){
+      const bx = bx0 + dx, by = by0 + dy, bg = g.createRadialGradient(bx, by, 0, bx, by, br);
       bg.addColorStop(0, dark ? 'rgba(0,0,0,.22)' : 'rgba(255,230,200,.07)'); bg.addColorStop(1, 'rgba(0,0,0,0)');
       g.fillStyle = bg; g.fillRect(bx - br, by - br, br*2, br*2);
     }
+    if (st.crack){ g.strokeStyle = 'rgba(10,5,3,.75)'; g.lineWidth = 1.1; g.stroke(pathOf(st.crack, dx, dy)); }
     g.restore();
-    if (Math.random() < .55){
-      const a0 = Math.random()*TAU; let px = cx + Math.cos(a0)*hs*.85, py = cy + Math.sin(a0)*hs*.85;
-      const crack = [[px, py]], dir = a0 + Math.PI + rand(-.5, .5);
-      for (let k = 0; k < 4; k++){ px += Math.cos(dir + rand(-.6, .6))*rand(5, 10); py += Math.sin(dir + rand(-.6, .6))*rand(5, 10); crack.push([px, py]); }
-      const cp = new Path2D(); crack.forEach(([x, y], i) => i ? cp.lineTo(x, y) : cp.moveTo(x, y));
-      g.save(); g.clip(path); g.strokeStyle = 'rgba(10,5,3,.75)'; g.lineWidth = 1.1; g.stroke(cp); g.restore();
-      hg.save(); hg.clip(path); hg.strokeStyle = '#000'; hg.lineWidth = 1.8; hg.stroke(cp); hg.restore();
-    }
-    const bv = g.createLinearGradient(cx - hs, cy - hs, cx + hs, cy + hs);
+    const bv = g.createLinearGradient(cx - HEX, cy - HEX, cx + HEX, cy + HEX);
     bv.addColorStop(0, 'rgba(255,228,195,.24)'); bv.addColorStop(.5, 'rgba(255,228,195,0)'); bv.addColorStop(.5, 'rgba(0,0,0,0)'); bv.addColorStop(1, 'rgba(0,0,0,.5)');
     g.lineWidth = 2.2; g.strokeStyle = bv; g.stroke(path);
-    const hv = 150 + Math.random()*70 | 0;
-    hg.fillStyle = `rgb(${hv},${hv},${hv})`; hg.fill(path);
+    hg.fillStyle = `rgb(${st.hv},${st.hv},${st.hv})`; hg.fill(path);
     hg.lineWidth = 5; hg.strokeStyle = 'rgba(0,0,0,.4)'; hg.stroke(path);
+    if (st.crack){ hg.save(); hg.clip(path); hg.strokeStyle = '#000'; hg.lineWidth = 1.8; hg.stroke(pathOf(st.crack, dx, dy)); hg.restore(); }
     rg.fillStyle = '#000'; rg.fill(path);
   }
-  for (let i = 0; i < 9000; i++){
-    const a = Math.random()*TAU, r = Math.sqrt(Math.random())*R;
+  for (let i = 0; i < 2600; i++){
     g.fillStyle = Math.random() < .55 ? `rgba(0,0,0,${rand(.08,.2)})` : `rgba(255,220,190,${rand(.03,.09)})`;
-    g.fillRect(Math.cos(a)*r, Math.sin(a)*r, rand(.8,2), rand(.8,2));
+    g.fillRect(rand(0, TILE_W), rand(0, TILE_H), rand(.8, 2), rand(.8, 2));
   }
-  for (let i = 0; i < 16; i++){
-    const a = Math.random()*TAU, r = rand(200, R - 40), x = Math.cos(a)*r, y = Math.sin(a)*r, br = rand(25, 70);
-    const sg = g.createRadialGradient(x, y, 0, x, y, br); sg.addColorStop(0, 'rgba(0,0,0,.4)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = sg; g.fillRect(x - br, y - br, br*2, br*2);
-  }
-  // rune seal: faint in the stone, engraved in the height map, bright in the glow map
-  for (const [ctx2, col, lw] of [[g, 'rgba(255,150,70,.28)', 3], [hg, 'rgba(0,0,0,.8)', 4], [rg, 'rgb(255,120,40)', 3]]){
-    ctx2.strokeStyle = col; ctx2.lineWidth = lw;
-    ctx2.beginPath(); ctx2.arc(0, 0, 150, 0, TAU); ctx2.stroke();
-    ctx2.beginPath(); ctx2.arc(0, 0, 176, 0, TAU); ctx2.stroke();
-    ctx2.lineWidth = lw*.7;
-    for (let i = 0; i < 24; i++){ const a = i*TAU/24, e = i % 3 ? 163 : 173; ctx2.beginPath(); ctx2.moveTo(Math.cos(a)*153, Math.sin(a)*153); ctx2.lineTo(Math.cos(a)*e, Math.sin(a)*e); ctx2.stroke(); }
-    for (const off of [0, TAU/6]){
-      ctx2.beginPath();
-      for (let i = 0; i <= 3; i++){ const a = -Math.PI/2 + off + i*TAU/3; const px = Math.cos(a)*150, py = Math.sin(a)*150; i ? ctx2.lineTo(px, py) : ctx2.moveTo(px, py); }
-      ctx2.stroke();
-    }
-  }
-  return [c, hc, rc];
+  const tex = cnv => { const t = new THREE.CanvasTexture(cnv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; };
+  return [tex(c), tex(hc), tex(rc)];
 }
-const [groundCanvas, heightCanvas, runeCanvas] = makeGround();
-const groundTex = new THREE.CanvasTexture(groundCanvas);
-groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-const heightTex = new THREE.CanvasTexture(heightCanvas);
-const runeTex = new THREE.CanvasTexture(runeCanvas);
+const [groundTex, heightTex, runeTex] = makeGroundTile();
+const sealTex = canvasTex(1024, (g, s) => {
+  g.translate(s/2, s/2); g.scale(s/400, s/400); g.lineCap = 'round';
+  const draw = (col, lw, blur) => {
+    g.shadowColor = col; g.shadowBlur = blur; g.strokeStyle = col; g.lineWidth = lw;
+    g.beginPath(); g.arc(0, 0, 150, 0, TAU); g.stroke();
+    g.beginPath(); g.arc(0, 0, 176, 0, TAU); g.stroke();
+    g.lineWidth = lw*.7;
+    for (let i = 0; i < 24; i++){ const a = i*TAU/24, e = i % 3 ? 163 : 173; g.beginPath(); g.moveTo(Math.cos(a)*153, Math.sin(a)*153); g.lineTo(Math.cos(a)*e, Math.sin(a)*e); g.stroke(); }
+    for (const off of [0, TAU/6]){ g.beginPath(); for (let i = 0; i <= 3; i++){ const a = -Math.PI/2 + off + i*TAU/3; i ? g.lineTo(Math.cos(a)*150, Math.sin(a)*150) : g.moveTo(Math.cos(a)*150, Math.sin(a)*150); } g.stroke(); }
+  };
+  draw('rgba(255,110,30,.5)', 7, 14); draw('rgb(255,170,90)', 2.6, 0);
+});
 
 // Lava: noise is baked once into a tiling texture (R,G = two fbm fields, B = cell-edge distance for crust plates),
 // so the shader only does three texture reads per pixel instead of dozens of noise evaluations.
@@ -577,19 +614,20 @@ const lavaMat = new THREE.ShaderMaterial({
       col *= 0.9 + 0.1*sin(t*1.5 + heat*9.0);
       float d = length(vP);
       col += vec3(1.0, 0.4, 0.08) * exp(-max(d - uR, 0.0)/55.0) * 0.45;
-      col *= 1.0 - smoothstep(1600.0, 3200.0, d)*0.6;
+      col *= 1.0 - smoothstep(uR + 1300.0, uR + 2900.0, d)*0.6;
       gl_FragColor = vec4(col, 1.0);
     }`
 });
 const lava = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), lavaMat);
 lava.rotation.x = -Math.PI/2; lava.position.y = LAVA_Y; scene.add(lava);
 
-const topMat = new THREE.MeshStandardMaterial({ map:groundTex, bumpMap:heightTex, bumpScale:3.2, emissiveMap:runeTex, emissive:new THREE.Color(1, .5, .2), emissiveIntensity:.9, roughness:.92, metalness:0 });
-const platformTop = new THREE.Mesh(new THREE.CircleGeometry(GROUND_R, 160), topMat);
+const topMat = new THREE.MeshStandardMaterial({ map:groundTex, bumpMap:heightTex, bumpScale:3.2, emissiveMap:runeTex, emissive:new THREE.Color(1, .5, .2), emissiveIntensity:.8, roughness:.92, metalness:0 });
+const platformTop = new THREE.Mesh(new THREE.CircleGeometry(1, 220), topMat);
 platformTop.rotation.x = -Math.PI/2; platformTop.receiveShadow = true; scene.add(platformTop);
-
-const sideGeo = new THREE.CylinderGeometry(GROUND_R, GROUND_R*.84, 110, 120, 5, true);
-{ const pa = sideGeo.attributes.position; for (let i = 0; i < pa.count; i++){ if (pa.getY(i) > 54) continue; const k = rand(.955, 1.02); pa.setX(i, pa.getX(i)*k); pa.setZ(i, pa.getZ(i)*k); } sideGeo.computeVertexNormals(); }
+const seal = new THREE.Mesh(new THREE.CircleGeometry(200, 64).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ map:sealTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+seal.position.y = .45; scene.add(seal);
+const sideGeo = new THREE.CylinderGeometry(1, .9, 110, 200, 5, true);
+{ const pa = sideGeo.attributes.position; for (let i = 0; i < pa.count; i++){ if (pa.getY(i) > 54) continue; const k = rand(.985, 1.012); pa.setX(i, pa.getX(i)*k); pa.setZ(i, pa.getZ(i)*k); } sideGeo.computeVertexNormals(); }
 const platformSide = new THREE.Mesh(sideGeo, new THREE.MeshStandardMaterial({ color:0x2d1f1a, roughness:1, emissive:0x1c0600, flatShading:true }));
 platformSide.position.y = -55; platformSide.receiveShadow = true; scene.add(platformSide);
 
@@ -608,26 +646,41 @@ function glow(color, size, opacity = 1){
   s.scale.set(size, size, 1); return s;
 }
 
-const rim = new THREE.Mesh(GEO.thin, new THREE.MeshBasicMaterial({ color:0xffa050 }));
-rim.position.y = .7; scene.add(rim);
+// rim: a fixed-width glowing band at the lava edge, rebuilt only when the radius changes
+const RIM_N = 256, rimGeo = new THREE.BufferGeometry();
+rimGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((RIM_N + 1)*2*3), 3).setUsage(THREE.DynamicDrawUsage));
+{ const idx = []; for (let i = 0; i < RIM_N; i++){ const a = i*2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } rimGeo.setIndex(idx); }
+let rimR = -1;
+function setRim(r){
+  if (Math.abs(r - rimR) < .5) return; rimR = r;
+  const pa = rimGeo.attributes.position;
+  for (let i = 0; i <= RIM_N; i++){ const a = i/RIM_N*TAU, c = Math.cos(a), s2 = Math.sin(a); pa.setXYZ(i*2, c*(r - 5), .7, s2*(r - 5)); pa.setXYZ(i*2 + 1, c*(r + 1.5), .7, s2*(r + 1.5)); }
+  pa.needsUpdate = true; rimGeo.computeBoundingSphere();
+}
+const rim = new THREE.Mesh(rimGeo, new THREE.MeshBasicMaterial({ color:0xffa050, side:THREE.DoubleSide }));
+rim.frustumCulled = false; scene.add(rim);
 const heat = new THREE.Mesh(GEO.disk, new THREE.MeshBasicMaterial({ map:heatTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
 heat.position.y = .5; scene.add(heat);
 const crumbleRing = new THREE.LineLoop(GEO.circle, new THREE.LineBasicMaterial({ color:0xff7a40, transparent:true, opacity:.6 }));
 crumbleRing.position.y = 1; crumbleRing.visible = false; scene.add(crumbleRing);
 
-// basalt spires rising from the lava behind the ring
+// basalt spires rising from the lava around the ring (moved out when the arena is larger)
+const spires = [];
 {
   const spireMat = new THREE.MeshStandardMaterial({ color:0x1e1512, roughness:1, flatShading:true, emissive:0x120300 });
-  const angles = [-2.7, -2.15, -1.6, -1.05, -.45, .15, 3.0];
-  for (const a of angles){
-    const r = rand(760, 880), h = rand(170, 330);
+  const crystalMat = new THREE.MeshBasicMaterial({ color:0xffb060 });
+  for (let i = 0; i < 12; i++){
+    const a = i/12*TAU + rand(-.18, .18), h = rand(170, 330);
     const geo = new THREE.CylinderGeometry(rand(7, 15), rand(36, 54), h, 6, 4);
-    const pa = geo.attributes.position; for (let i = 0; i < pa.count; i++){ const k = rand(.85, 1.12); pa.setX(i, pa.getX(i)*k); pa.setZ(i, pa.getZ(i)*k); } geo.computeVertexNormals();
-    const m = new THREE.Mesh(geo, spireMat); m.position.set(Math.cos(a)*r, LAVA_Y + h/2 - 20, Math.sin(a)*r); m.rotation.y = rand(0, TAU); m.castShadow = true; scene.add(m);
-    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(9, 0), new THREE.MeshBasicMaterial({ color:0xffb060 }));
-    crystal.position.set(m.position.x, LAVA_Y + h - 12, m.position.z); crystal.scale.y = 1.8; scene.add(crystal);
-    const gl = glow(0xff7a30, 110, .8); gl.position.copy(crystal.position); scene.add(gl);
+    const pa = geo.attributes.position; for (let j = 0; j < pa.count; j++){ const k = rand(.85, 1.12); pa.setX(j, pa.getX(j)*k); pa.setZ(j, pa.getZ(j)*k); } geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, spireMat); m.position.y = LAVA_Y + h/2 - 20; m.rotation.y = rand(0, TAU); m.castShadow = true; scene.add(m);
+    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(9, 0), crystalMat); crystal.position.y = LAVA_Y + h - 12; crystal.scale.y = 1.8; scene.add(crystal);
+    const gl = glow(0xff7a30, 110, .8); gl.position.y = crystal.position.y; scene.add(gl);
+    spires.push({ a, off:rand(240, 420), parts:[m, crystal, gl] });
   }
+}
+function placeSpires(r0){
+  for (const sp of spires){ const r = r0 + sp.off; for (const p of sp.parts){ p.position.x = Math.cos(sp.a)*r; p.position.z = Math.sin(sp.a)*r; } }
 }
 
 // particles: one additive layer for fire and magic, one normal layer for smoke and grit
@@ -664,8 +717,8 @@ if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass){
   } catch { composer = null; }
 }
 
-const PR_MAX = Math.min(2, window.devicePixelRatio || 1), PR_MIN = Math.min(PR_MAX, .9);
-let prScale = Math.min(PR_MAX, 1.5);
+const PR_MAX = Math.min(IS_TOUCH ? 1.5 : 2, window.devicePixelRatio || 1), PR_MIN = Math.min(PR_MAX, IS_TOUCH ? .8 : .9);
+let prScale = Math.min(PR_MAX, IS_TOUCH ? 1.25 : 1.5);
 function resize(){
   W = gameEl.clientWidth; H = gameEl.clientHeight;
   PR = prScale;
@@ -727,9 +780,10 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem('cinder-ring-setti
 const state = {
   phase:'title', demo:true, paused:false, time:0, t:0, round:0, rounds:5, diff:'adept',
   warlocks:[], projectiles:[], meteors:[], wells:[], particles:[], bolts:[], texts:[], rings:[], flashes:[], deaths:[], feed:[],
-  arena:{ r:520, target:520, next:12, min:150 },
+  arena:{ r:1040, r0:1040, target:1040, next:12, min:300, step:106 },
   shake:0, timeScale:1, fast:false, human:null, cursor:{x:0,y:0}, armed:null, phaseT:0, lastCount:0,
-  cam:{ viewR:640 },
+  cam:{ viewR:600, fx:0, fy:0, snap:true, follow:null, switchAt:0 },
+  mouse:{ x:0, y:0 }, hasMouse:false, rmb:false,
 };
 
 function shade(hex, k){
@@ -748,6 +802,12 @@ function makeWarlock(i, name, color, human){
 }
 
 /* ---------- match flow ---------- */
+// Radius is twice the original ring for a 4-warlock match and grows with every extra warlock.
+function arenaFor(n){
+  const r0 = Math.round(520*clamp(1.5 + .25*(n - 2), 1.5, 2.75));
+  const min = Math.round(Math.max(170, r0*.3));
+  return { r:r0, r0, target:r0, next:12, min, step:(r0 - min)/7 };
+}
 function newMatch(demo){
   state.demo = demo; state.paused = false; state.fast = false;
   state.diff = demo ? 'adept' : settings.diff;
@@ -762,8 +822,9 @@ function newMatch(demo){
   }
   state.human = demo ? null : state.warlocks[0];
   state.projectiles = []; state.meteors = []; state.wells = []; state.bolts = []; state.texts = []; state.rings = [];
-  state.arena = { r:520, target:520, next:12, min:150 };
-  state.warlocks.forEach((w,i) => { const a = i*TAU/n; w.x = w.px = Math.cos(a)*300; w.y = w.py = Math.sin(a)*300; w.facing = a + Math.PI; });
+  state.arena = arenaFor(demo ? 4 : n);
+  placeSpires(state.arena.r0);
+  { const sr = state.arena.r0*.55; state.warlocks.forEach((w,i) => { const a = i*TAU/n; w.x = w.px = Math.cos(a)*sr; w.y = w.py = Math.sin(a)*sr; w.facing = a + Math.PI; }); }
   state.flashes = [];
   buildActors();
   if (demo){
@@ -777,16 +838,17 @@ function newMatch(demo){
 
 function startRound(){
   state.round++;
-  state.arena = { r:520, target:520, next:12, min:150 };
+  state.arena = arenaFor(state.demo ? 4 : state.warlocks.length);
   state.projectiles = []; state.meteors = []; state.wells = []; state.bolts = []; state.texts = []; state.rings = []; state.flashes = []; state.deaths = [];
   const n = state.warlocks.length, off = Math.random()*TAU;
   state.warlocks.forEach((w,i) => {
     const a = off + i*TAU/n;
-    Object.assign(w, { x:Math.cos(a)*300, y:Math.sin(a)*300, vx:0, vy:0, evx:0, evy:0, mx:null, my:null,
+    Object.assign(w, { x:Math.cos(a)*state.arena.r0*.55, y:Math.sin(a)*state.arena.r0*.55, vx:0, vy:0, evx:0, evy:0, mx:null, my:null,
       hp:w.maxHp, alive:true, shieldT:0, dash:null, lastHit:null, flash:0, roundKills:0, roundDmg:0, cd:{}, cdMax:{}, facing:a+Math.PI });
     w.px = w.x; w.py = w.y;
   });
-  state.cam.viewR = 640;
+  state.cam.snap = true;
+  buildTouch();
   state.phase = 'countdown';
   state.phaseT = state.demo ? 1.2 : 3;
   state.lastCount = 0;
@@ -1156,13 +1218,13 @@ function simulate(dt){
   if (state.phase === 'fight'){
     A.next -= dt;
     if (A.next <= 0 && A.target > A.min){
-      A.target = Math.max(A.min, A.target - 55); A.next = 12;
+      A.target = Math.max(A.min, A.target - A.step); A.next = 12;
       sfx.crumble(); addShake(3);
       if (!state.demo) banner('', 'The ring crumbles', 1.2);
     }
   }
   if (A.r > A.target){
-    const step = Math.min(A.r - A.target, 42*dt); A.r -= step;
+    const step = Math.min(A.r - A.target, A.step*.8*dt); A.r -= step;
     if (Math.random() < .7) spawnDebris(Math.random()*TAU, A.r);
     for (let i=0;i<3;i++){ const a = Math.random()*TAU; burst(Math.cos(a)*A.r, Math.sin(a)*A.r, 1, { col:Math.random()<.5?[255,140,50]:[50,34,30], sp:[10,60], life:[.6,1.3], size:[2,5], glow:Math.random()<.6, vx:Math.cos(a)*40, vy:Math.sin(a)*40, z:0, vz:[-40,40] }); }
   }
@@ -1283,7 +1345,7 @@ function simulate(dt){
         p.dead = true; break;
       }
     }
-    if (hyp(p.x, p.y) > 1100) p.dead = true;
+    if (hyp(p.x, p.y) > state.arena.r0 + 700) p.dead = true;
   }
   for (let i=0;i<P.length;i++){
     const a = P[i]; if (a.dead || a.type === 'well' || a.type === 'drainBack') continue;
@@ -1353,8 +1415,9 @@ function updateFx(dt){
   state.particles = state.particles.filter(p => p.life > 0);
   // embers drifting off the lava sea
   for (let i=0;i<2;i++){
-    const a = Math.random()*TAU, r = R + rand(20, 700);
-    state.particles.push({ x:Math.cos(a)*r, y:Math.sin(a)*r, z:LAVA_Y + 2, vx:rand(-10,10), vy:rand(-10,10), vz:rand(25,70), grav:0, life:rand(1.2,2.6), max:2.6, size:rand(1.5,3.2), col:[255,rand(90,170),40], glow:true, drag:.3 });
+    const ex = state.cam.fx + rand(-900, 900), ey = state.cam.fy + rand(-650, 650);
+    if (hyp(ex, ey) < R + 15) continue;
+    state.particles.push({ x:ex, y:ey, z:LAVA_Y + 2, vx:rand(-10,10), vy:rand(-10,10), vz:rand(25,70), grav:0, life:rand(1.2,2.6), max:2.6, size:rand(1.5,3.2), col:[255,rand(90,170),40], glow:true, drag:.3 });
   }
   for (const b of state.bolts) b.t -= dt; state.bolts = state.bolts.filter(b => b.t > 0);
   for (const t of state.texts){ t.t -= dt; } state.texts = state.texts.filter(t => t.t > 0);
@@ -1372,6 +1435,7 @@ function frame(now){
   if (!state.paused){
     if (state.phase === 'roundEnd') state.timeScale = Math.min(1, state.timeScale + rdt*.45);
     const dt = rdt * GAME_SPEED * state.timeScale * (state.fast ? 3 : 1);
+    applyJoystick();
     if (state.phase === 'countdown'){
       state.phaseT -= rdt;
       const c = Math.ceil(state.phaseT);
@@ -1407,17 +1471,17 @@ cv.addEventListener('pointerdown', e => {
   const h = state.human; if (!h || state.demo || state.paused) return;
   const p = toWorld(e.offsetX, e.offsetY); state.cursor = p;
   if (!h.alive || (state.phase !== 'fight' && state.phase !== 'countdown')) return;
-  if (e.button === 2){ moveTo(h, p); return; }
+  if (e.button === 2){ state.rmb = true; moveTo(h, p); return; }
   if (e.button === 0){
     if (state.armed){ tryCast(h, state.armed, p.x, p.y); setArmed(null); }
     else moveTo(h, p);
   }
 });
 cv.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse'){ state.mouse.x = e.offsetX; state.mouse.y = e.offsetY; state.hasMouse = true; state.rmb = !!(e.buttons & 2); }
   state.cursor = toWorld(e.offsetX, e.offsetY);
-  const h = state.human;
-  if (h && h.alive && (e.buttons & 2) && state.phase === 'fight'){ h.mx = state.cursor.x; h.my = state.cursor.y; }
 });
+cv.addEventListener('pointerup', e => { if (e.pointerType === 'mouse') state.rmb = !!(e.buttons & 2); });
 addEventListener('keydown', e => {
   if (e.target instanceof HTMLInputElement) return;
   AU.init();
@@ -1437,6 +1501,134 @@ function setArmed(id){
   else hint.hidden = true;
   ORDER.forEach(s => { const el = $('slot-'+s); if (el) el.classList.toggle('armed', s === id); });
 }
+
+/* ---------- touch controls ---------- */
+// Left: floating joystick. Right: spell buttons fanned around a big Fireball button.
+// Tap a spell = auto-aim at the nearest rival; drag = aim, release = cast; drag back onto the button = cancel.
+let joy = null, tAim = null;
+if (IS_TOUCH) gameEl.classList.add('touch');
+const TOUCH_ORDER = ['blink','shield','lightning','drain','homing','meteor','thrust','gravity'];
+const TB_SLOTS = [[100,180],[100,208],[100,236],[100,264],[172,182],[172,203],[172,224],[172,245]]
+  .map(([r, deg]) => [Math.cos(deg*Math.PI/180)*r, Math.sin(deg*Math.PI/180)*r]);
+function buildTouch(){
+  if (!IS_TOUCH || state.demo || !state.human) return;
+  const h = state.human, owned = TOUCH_ORDER.filter(id => h.spells[id]);
+  const btn = (id, x, y, main) => `<button type="button" class="tb${main ? ' main' : ''}" data-spell="${id}" aria-label="${SP[id].name}" style="--x:${x.toFixed(0)}px;--y:${y.toFixed(0)}px">${ICON[id]}<span class="cd"></span><span class="cdt"></span></button>`;
+  $('tpad').innerHTML = btn('fireball', 0, 0, true) + owned.map((id, i) => btn(id, ...TB_SLOTS[i])).join('');
+  $('touch').hidden = false;
+}
+function updateTouch(h){
+  for (const el of $('tpad').children){
+    const id = el.dataset.spell, cd = (h.cd[id] || 0)/GAME_SPEED, mx = (h.cdMax[id] || 1)/GAME_SPEED;
+    el.querySelector('.cd').style.setProperty('--p', (cd/mx).toFixed(3));
+    el.querySelector('.cdt').textContent = cd > 0 ? (cd < 1 ? cd.toFixed(1) : Math.ceil(cd)) : '';
+    el.classList.toggle('ready', cd <= 0);
+  }
+}
+function applyJoystick(){
+  const h = state.human;
+  if (!joy || !h || !h.alive || state.phase !== 'fight') return;
+  const m = hyp(joy.dx, joy.dy);
+  if (m > .2){ h.mx = h.x + joy.dx/m*90; h.my = h.y + joy.dy/m*90; } else h.mx = null;
+}
+function spellRange(h, id){
+  const s = SP[id], L = h.spells[id] - 1;
+  if (id === 'lightning' || id === 'blink') return s.range[L];
+  if (id === 'meteor' || id === 'gravity') return s.range;
+  if (id === 'thrust') return s.dist[L];
+  return 600;
+}
+function autoCast(h, id){
+  if (id === 'shield') return tryCast(h, 'shield', h.x, h.y);
+  if (id === 'blink'){ const d = hyp(h.x, h.y) || 1; return tryCast(h, 'blink', h.x - h.x/d*400, h.y - h.y/d*400); }  // tap = escape toward the centre
+  let tg = null, bd = 1e9;
+  for (const o of state.warlocks){ if (!o.alive || o === h) continue; const d = hyp(o.x - h.x, o.y - h.y); if (d < bd){ bd = d; tg = o; } }
+  if (!tg) return tryCast(h, id, h.x + Math.cos(h.facing)*300, h.y + Math.sin(h.facing)*300);
+  const lead = t => [tg.x + tg.evx*t, tg.y + tg.evy*t];
+  if (id === 'fireball') return tryCast(h, id, ...lead(bd/SP.fireball.speed));
+  if (id === 'drain') return tryCast(h, id, ...lead(bd/SP.drain.speed));
+  if (id === 'meteor') return tryCast(h, id, ...lead(1));
+  if (id === 'gravity'){ const r = hyp(tg.x, tg.y) || 1; return tryCast(h, id, tg.x + tg.x/r*110, tg.y + tg.y/r*110); }
+  return tryCast(h, id, tg.x, tg.y);
+}
+{
+  const zone = $('joyZone'), base = $('joyBase'), knob = $('joyKnob'), M = 52;
+  const rest = () => { base.style.left = base.style.top = ''; base.classList.remove('active'); knob.style.transform = ''; };
+  zone.addEventListener('pointerdown', e => {
+    AU.init(); if (joy) return; e.preventDefault();
+    zone.setPointerCapture(e.pointerId);
+    const r = gameEl.getBoundingClientRect();
+    joy = { id:e.pointerId, ox:e.clientX, oy:e.clientY, dx:0, dy:0 };
+    base.style.left = (e.clientX - r.left) + 'px'; base.style.top = (e.clientY - r.top) + 'px'; base.classList.add('active');
+  });
+  zone.addEventListener('pointermove', e => {
+    if (!joy || e.pointerId !== joy.id) return;
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const L = hyp(dx, dy);
+    if (L > M){ dx *= M/L; dy *= M/L; }
+    joy.dx = dx/M; joy.dy = dy/M;
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+  });
+  const end = e => { if (!joy || e.pointerId !== joy.id) return; joy = null; rest(); if (state.human) state.human.mx = null; };
+  zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);
+
+  const pad = $('tpad');
+  pad.addEventListener('pointerdown', e => {
+    const b = e.target.closest('.tb'); if (!b || tAim) return;
+    AU.init(); e.preventDefault(); b.setPointerCapture(e.pointerId);
+    tAim = { id:e.pointerId, spell:b.dataset.spell, sx:e.clientX, sy:e.clientY, drag:false, cancel:false, el:b };
+    b.classList.add('press');
+  });
+  pad.addEventListener('pointermove', e => {
+    if (!tAim || e.pointerId !== tAim.id) return;
+    const h = state.human; if (!h) return;
+    const dx = e.clientX - tAim.sx, dy = e.clientY - tAim.sy, L = hyp(dx, dy);
+    if (L > 24){
+      tAim.drag = true; tAim.cancel = false; state.armed = tAim.spell;
+      const R = spellRange(h, tAim.spell), far = ['meteor','blink','gravity'].includes(tAim.spell) ? R*clamp((L - 24)/110, .15, 1) : R;
+      state.cursor = { x:h.x + dx/L*far, y:h.y + dy/L*far };
+    } else if (tAim.drag){ tAim.cancel = true; state.armed = null; }
+    tAim.el.classList.toggle('cancel', tAim.cancel);
+  });
+  const padEnd = e => {
+    if (!tAim || e.pointerId !== tAim.id) return;
+    const t = tAim, h = state.human; tAim = null; state.armed = null;
+    t.el.classList.remove('press', 'cancel');
+    if (!h || !h.alive || state.phase !== 'fight' || state.paused || e.type === 'pointercancel') return;
+    if (t.drag){ if (!t.cancel) tryCast(h, t.spell, state.cursor.x, state.cursor.y); }
+    else autoCast(h, t.spell);
+  };
+  pad.addEventListener('pointerup', padEnd); pad.addEventListener('pointercancel', padEnd);
+
+  const fs = $('btnFull');
+  if (IS_TOUCH && document.fullscreenEnabled){
+    fs.hidden = false;
+    fs.addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else gameEl.requestFullscreen().catch(() => {}); });
+  }
+}
+
+/* ---------- minimap ---------- */
+const miniEl = $('mini'), miniG = miniEl.getContext('2d');
+function drawMini(){
+  const css = miniEl.clientWidth; if (!css) return;
+  const px = Math.round(css*Math.min(2, window.devicePixelRatio || 1));
+  if (miniEl.width !== px){ miniEl.width = miniEl.height = px; }
+  const g = miniG, S = px, A = state.arena, sc = (S/2 - 4)/A.r0;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, S, S);
+  g.translate(S/2, S/2);
+  g.fillStyle = 'rgba(130,34,8,.55)'; g.beginPath(); g.arc(0, 0, S/2 - 1, 0, TAU); g.fill();
+  g.fillStyle = '#3b2a23'; g.beginPath(); g.arc(0, 0, A.r*sc, 0, TAU); g.fill();
+  g.strokeStyle = '#ffa060'; g.lineWidth = S/90; g.stroke();
+  const C = state.cam, vr = C.viewR*sc;
+  g.strokeStyle = 'rgba(242,229,209,.25)'; g.lineWidth = S/120; g.strokeRect(C.fx*sc - vr, C.fy*sc - vr*.6, vr*2, vr*1.2);
+  g.fillStyle = '#ff5a2a';
+  for (const m of state.meteors){ g.beginPath(); g.arc(m.x*sc, m.y*sc, S/40, 0, TAU); g.fill(); }
+  for (const w of state.warlocks){
+    if (!w.alive) continue;
+    g.fillStyle = w.color; g.beginPath(); g.arc(w.x*sc, w.y*sc, w.human ? S/22 : S/30, 0, TAU); g.fill();
+    if (w.human){ g.strokeStyle = '#fff'; g.lineWidth = S/70; g.stroke(); }
+  }
+}
+
 
 /* ---------- HUD ---------- */
 function buildBar(){
@@ -1463,6 +1655,8 @@ function updateHud(){
   $('hHpFill').style.transform = `scaleX(${frac})`;
   $('hHpText').textContent = h.alive ? `${Math.ceil(h.hp)} / ${h.maxHp}` : 'Fallen';
   $('hGold').textContent = `${h.gold}g`;
+  if (IS_TOUCH) updateTouch(h);
+  drawMini();
   for (const id of ORDER){
     const el = $('slot-'+id); if (!el) continue;
     const lv = h.spells[id] || 0, cd = (h.cd[id] || 0) / GAME_SPEED, mx = (h.cdMax[id] || 1) / GAME_SPEED;
@@ -1972,10 +2166,26 @@ const aimLine = new THREE.Line(aimLineGeo, new THREE.LineBasicMaterial({ color:0
 [aimRing, aimTarget, aimLine].forEach(o => { o.visible = false; o.position.y = 1.2; scene.add(o); });
 
 function camUpdate(dt){
-  const C = state.cam, hudOn = !state.demo && !$('hud').hidden;
-  const target = Math.max(state.arena.r + 70, 260);
-  C.viewR += (target - C.viewR)*Math.min(1, dt*1.4);
-  const top = hudOn ? 44 : 0, bot = hudOn ? (W < 760 ? 112 : 104) : 0;
+  const C = state.cam, hudOn = !state.demo && !$('hud').hidden, A = state.arena, h = state.human;
+  const baseR = IS_TOUCH ? (H > W ? 390 : 470) : 560;
+  let fx = 0, fy = 0, want = baseR;
+  if (state.demo){
+    if (!C.follow || !C.follow.alive || state.time > C.switchAt){
+      const alive = state.warlocks.filter(w => w.alive);
+      C.follow = alive[(Math.random()*alive.length)|0] || null; C.switchAt = state.time + rand(7, 11);
+    }
+    if (C.follow){ fx = C.follow.x; fy = C.follow.y; }
+    want = 620;
+  } else if (h && h.alive){
+    fx = h.x; fy = h.y;
+    if (!IS_TOUCH && state.hasMouse){ fx += clamp((state.cursor.x - h.x)*.16, -100, 100); fy += clamp((state.cursor.y - h.y)*.16, -100, 100); }
+    else if (joy){ fx += joy.dx*60; fy += joy.dy*60; }
+  } else want = Math.max(baseR, A.r + 90);   // fallen: watch the whole ring
+  if (C.snap){ C.fx = fx; C.fy = fy; C.viewR = want; C.snap = false; }
+  const k = Math.min(1, dt*4);
+  C.fx += (fx - C.fx)*k; C.fy += (fy - C.fy)*k;
+  C.viewR += (want - C.viewR)*Math.min(1, dt*1.6);
+  const top = hudOn ? 44 : 0, bot = hudOn && !IS_TOUCH ? 104 : 0;
   const titleWide = !$('title').hidden && W > 900;
   const effW = titleWide ? W*.58 : W, effH = Math.max(120, H - top - bot);
   const cxEff = titleWide ? W*.68 : W/2, cyEff = top + effH/2;
@@ -1983,10 +2193,11 @@ function camUpdate(dt){
   const distH = C.viewR*1.1 / (TAN_V*(W/H)*effW/W);
   const dist = Math.max(distV, distH);
   const sx = state.shake ? rand(-1, 1)*state.shake*1.6 : 0, sz = state.shake ? rand(-1, 1)*state.shake*1.6 : 0;
-  camera.position.set(sx, Math.sin(ELEV)*dist, Math.cos(ELEV)*dist + sz);
-  camera.lookAt(sx, 0, sz);
+  camera.position.set(C.fx + sx, Math.sin(ELEV)*dist, C.fy + Math.cos(ELEV)*dist + sz);
+  camera.lookAt(C.fx + sx, 0, C.fy + sz);
   camera.setViewOffset(W, H, -(cxEff - W/2), -(cyEff - H/2), W, H);
   camera.far = dist + 5000; camera.updateProjectionMatrix();
+  sun.position.set(C.fx - 380, 900, C.fy + 260); sun.target.position.set(C.fx, 0, C.fy); sun.target.updateMatrixWorld();
 }
 
 let lastRender = performance.now();
@@ -2005,23 +2216,30 @@ function render3D(){
   const now = performance.now(), rawDt = (now - lastRender)/1000, dt = Math.min(.05, rawDt); lastRender = now;
   if (rawDt < .5) adaptQuality(rawDt);
   camUpdate(dt);
-  const A = state.arena, k = A.r / GROUND_R;
+  const A = state.arena, r = A.r, C = state.cam;
   lavaMat.uniforms.uTime.value = state.time; lavaMat.uniforms.uR.value = A.r; fxTime.value = state.time;
-  platformTop.scale.set(k, k, 1);
-  groundTex.repeat.set(k, k); groundTex.offset.set((1-k)/2, (1-k)/2);
-  platformSide.scale.set(k, 1, k);
-  rim.scale.set(A.r, 1, A.r); heat.scale.set(A.r, 1, A.r);
+  platformTop.scale.set(r, r, 1);
+  groundTex.repeat.set(2*r/TILE_W, 2*r/TILE_H); groundTex.offset.set(-r/TILE_W, -r/TILE_H);
+  platformSide.scale.set(r, 1, r);
+  // the camera follows the player, so re-read the world point under a still mouse
+  if (state.hasMouse && !IS_TOUCH){
+    state.cursor = toWorld(state.mouse.x, state.mouse.y);
+    const h0 = state.human;
+    if (state.rmb && h0 && h0.alive && state.phase === 'fight'){ h0.mx = state.cursor.x; h0.my = state.cursor.y; }
+  }
+  setRim(A.r); heat.scale.set(A.r, 1, A.r);
   rim.material.color.setRGB(1, .55 + .1*Math.sin(state.time*3), .25);
   if (state.phase === 'fight' && A.target > A.min && A.next < 3){
-    const nr = Math.max(A.min, A.target - 55);
+    const nr = Math.max(A.min, A.target - A.step);
     crumbleRing.visible = true; crumbleRing.scale.set(nr, 1, nr); crumbleRing.material.opacity = .45 + .35*Math.sin(state.time*10);
   } else crumbleRing.visible = false;
 
   // warlocks
   for (const w of state.warlocks){
     const a = w.actor; if (!a) continue;
-    a.group.visible = w.alive; a.label.hidden = !w.alive;
-    if (!w.alive) continue;
+    const near = hyp(w.x - C.fx, w.y - C.fy) < C.viewR*1.9;
+    a.group.visible = w.alive && near; a.label.hidden = !w.alive || !near;
+    if (!w.alive || !near){ a.lx = w.x; a.ly = w.y; continue; }
     const inLava = hyp(w.x, w.y) > A.r + 4;
     const tY = inLava ? LAVA_Y + 4 : Math.min(18, hyp(w.vx, w.vy)*.03);
     w.visY += (tY - w.visY)*Math.min(1, dt*10);
