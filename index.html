@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="A 3D Warlock arena brawl in your browser. Knock rival warlocks into the lava with 8 spells. Last one standing wins. Free, no install.">
 <meta name="theme-color" content="#0d0908">
-<link rel="canonical" href="https://borabasol.github.io/cinder-ring/">
+<link rel="canonical" href="https://cinderring.tech/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Cinder Ring: Warlock arena brawl">
 <meta property="og:description" content="A 3D Warlock arena brawl in your browser. Knock rival warlocks into the lava with 8 spells. Last one standing wins. Free, no install.">
-<meta property="og:url" content="https://borabasol.github.io/cinder-ring/">
-<meta property="og:image" content="https://borabasol.github.io/cinder-ring/og.png">
+<meta property="og:url" content="https://cinderring.tech/">
+<meta property="og:image" content="https://cinderring.tech/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Cinder Ring: Warlock arena brawl">
 <meta name="twitter:description" content="A 3D Warlock arena brawl in your browser. Knock rival warlocks into the lava with 8 spells. Last one standing wins. Free, no install.">
-<meta name="twitter:image" content="https://borabasol.github.io/cinder-ring/og.png">
+<meta name="twitter:image" content="https://cinderring.tech/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ff6a1f'/%3E%3Ccircle cx='16' cy='16' r='9' fill='%23241612'/%3E%3C/svg%3E">
 <style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Cinder Ring</title>
@@ -2123,9 +2123,9 @@ function castCmd(h, id, x, y){
 
 /* --- connecting --- */
 // PeerJS's bundled TURN relays (eu-0/us-0.turn.peerjs.com) no longer resolve, so bring our own ICE list.
-// STUN lets most home networks connect directly; players behind carrier NAT need a TURN relay (TURN_API below).
+// STUN lets most home networks connect directly; players behind carrier NAT go through our TURN relay.
 const STUN = [{ urls:['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls:'stun:stun.cloudflare.com:3478' }];
-const TURN_API = '';   // e.g. a Metered credentials URL: https://<app>.metered.live/api/v1/turn/credentials?apiKey=<key>
+const TURN_API = 'https://cinderring.tech/turn-credentials';   // our coturn relay; the VPS issues 24 h credentials
 let iceCache = null;
 async function iceServers(){
   if (iceCache) return iceCache;
@@ -2138,7 +2138,8 @@ const myName = () => (settings.name.trim() || 'Warlock').slice(0, 14);
 const MY_TOKEN = Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length:5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[(Math.random()*32)|0]).join('');
 async function openPeer(id){
-  const opts = { debug:0, config:{ iceServers:await iceServers() } };
+  // our own PeerJS signaling server on the VPS (no dependency on the public 0.peerjs.com broker)
+  const opts = { host:'cinderring.tech', port:443, secure:true, path:'/peerjs/', debug:0, config:{ iceServers:await iceServers() } };
   return new Promise((res, rej) => {
     if (typeof Peer === 'undefined') return rej(new Error('nolib'));
     let p;
@@ -2197,7 +2198,7 @@ async function mpRun(label, fn){
       : t === 'blocked' ? 'The room exists, but a direct connection to its host failed. One of your networks (often mobile data) blocks peer-to-peer links. Try both on Wi-Fi.'
       : t === 'noreply' ? 'Connected, but the host did not answer. Ask them to keep the game tab open and try again.'
       : t === 'full' ? 'That room is full or already playing.'
-      : `Online play could not connect here. It runs on the public site: <a href="https://borabasol.github.io/cinder-ring/" target="_blank" rel="noopener">borabasol.github.io/cinder-ring</a>`;
+      : `Online play could not connect here. It runs on the public site: <a href="https://cinderring.tech/" target="_blank" rel="noopener">cinderring.tech</a>`;
   }
   finally { document.querySelectorAll('.mp button').forEach(b => b.disabled = false); }
 }

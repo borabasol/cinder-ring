@@ -2,7 +2,7 @@
 
 A 3D Warlock-style arena brawl that runs in the browser. Knock rival warlocks into the lava with 8 spells, buy upgrades between rounds, and be the last one standing.
 
-**Play:** https://borabasol.github.io/cinder-ring/
+**Play:** https://cinderring.tech/ (mirror: https://borabasol.github.io/cinder-ring/)
 
 Inspired by the classic *Warlock* custom map for Warcraft III. Built with three.js; everything else is a single `index.html`.
 
@@ -11,7 +11,7 @@ Inspired by the classic *Warlock* custom map for Warcraft III. Built with three.
 - **Create room** gives you a code and a link to share; the match starts by itself when the room is full
 - The room's creator can also start early and fill empty seats with bots
 
-Peer-to-peer over WebRTC (PeerJS). The room creator's browser runs the match, so they should keep the tab open and in front.
+Peer-to-peer over WebRTC. The room creator's browser runs the match. Signaling (PeerJS server) and a TURN relay (coturn, 24 h HMAC credentials) run on the VPS behind cinderring.tech; configs are in `server/` (no secrets). `./deploy.sh` uploads the game to the VPS.
 
 ## Controls (desktop)
 - Right-click (or tap) the ground to move
