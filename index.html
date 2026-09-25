@@ -22,7 +22,7 @@
 <title>Cinder Ring</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Metamorphous&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Metamorphous&family=Cinzel:wght@400;600;700;900&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
@@ -290,6 +290,180 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
   #hBoard li{font-size:12px}
   .hud-round b{font-size:17px}
 }
+/* ================= Reforged-inspired interface ================= */
+:root{
+  --g1:#f3d78a; --g2:#c49a46; --g3:#7d5a22; --g4:#3b2a12;
+  --iron1:#2a221c; --iron2:#15110e; --iron3:#0a0807;
+  --parch:#efe0b6; --wc-yellow:#ffcc33; --hp1:#3fdc4c; --hp2:#1f8a2a;
+  --serif:'Cinzel','Trajan Pro','Palatino Linotype',Georgia,serif;
+}
+/* metal plate with a double gold rim */
+.wc-frame{background:radial-gradient(120% 140% at 50% 0%,rgba(255,220,150,.06),transparent 55%),linear-gradient(180deg,var(--iron1),var(--iron2) 60%,var(--iron3));border:2px solid var(--g3);border-radius:3px;box-shadow:0 0 0 1px #000,0 0 0 3px rgba(196,154,70,.35),inset 0 0 0 1px rgba(243,215,138,.18),inset 0 2px 0 rgba(255,230,170,.12),0 18px 50px rgba(0,0,0,.65);position:relative}
+.wc-frame::before,.wc-frame::after{content:"";position:absolute;width:12px;height:12px;border:2px solid var(--g2);background:linear-gradient(135deg,var(--g1),var(--g3));transform:rotate(45deg);top:-8px;box-shadow:0 0 6px rgba(255,200,100,.4)}
+.wc-frame::before{left:-8px}
+.wc-frame::after{right:-8px}
+.wc-btn{font-family:var(--serif);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g1);background:linear-gradient(180deg,#3a2c1d 0%,#1d150f 48%,#120c08 52%,#241a11 100%);border:2px solid var(--g3);border-radius:3px;padding:12px 22px;box-shadow:0 0 0 1px #000,inset 0 1px 0 rgba(255,225,160,.25),inset 0 -2px 6px rgba(0,0,0,.6),0 4px 10px rgba(0,0,0,.5);text-shadow:0 1px 0 #000,0 0 10px rgba(255,190,90,.25);transition:filter .15s,box-shadow .15s,color .15s}
+.wc-btn:hover:not(:disabled){color:#fff3cf;filter:brightness(1.18);box-shadow:0 0 0 1px #000,0 0 0 2px rgba(243,215,138,.35),inset 0 1px 0 rgba(255,225,160,.35),0 0 18px rgba(255,170,60,.35)}
+.wc-btn:active:not(:disabled){filter:brightness(.9);transform:translateY(1px)}
+.wc-btn:disabled{opacity:.45;cursor:default}
+.wc-btn.primary{background:linear-gradient(180deg,#7a2a10 0%,#4a170a 48%,#360f06 52%,#5a1d0b 100%);border-color:var(--g2);color:#ffe8b0}
+.wc-btn.small{padding:9px 16px;font-size:13px}
+
+/* ---- main menu ---- */
+#title{background:linear-gradient(90deg,rgba(8,5,4,.92) 0%,rgba(8,5,4,.72) 30%,rgba(8,5,4,.12) 60%,rgba(8,5,4,.35) 100%),url("icons/menu_bg.jpg") center/cover no-repeat,#0b0706;align-items:center;gap:40px;padding:32px clamp(16px,6vw,90px)}
+.menu{display:flex;flex-direction:column;gap:16px;max-width:380px;margin-block:auto}
+.logo{display:flex;flex-direction:column;line-height:.86;margin-bottom:4px}
+.logo-1,.logo-2{font-family:var(--serif);font-weight:900;font-size:clamp(54px,8vw,92px);letter-spacing:.02em;background:linear-gradient(180deg,#fff4cf 0%,var(--g1) 35%,var(--g2) 62%,#6d4a18 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #000) drop-shadow(0 0 22px rgba(255,120,30,.35))}
+.logo-2{padding-left:.55em}
+.logo-tag{margin-top:12px;font-family:var(--serif);font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--g2)}
+.menu .lede{font-size:15px;color:#cdbfa6;max-width:34ch;text-shadow:0 1px 2px #000}
+.menu-buttons{display:flex;flex-direction:column;gap:9px}
+.menu-buttons .wc-btn{font-size:17px;padding:13px 22px;text-align:left}
+.name-field input{max-width:none}
+.field label,.field .lbl{font-family:var(--serif);letter-spacing:.14em;color:var(--g2)}
+.field input,#optCode{background:#0d0907;border:1px solid var(--g3);box-shadow:inset 0 2px 6px rgba(0,0,0,.7);color:var(--parch);font-family:var(--serif);letter-spacing:.06em}
+.mp-note{max-width:38ch}
+.dialog{width:min(100%,420px);padding:26px 26px 22px;display:flex;flex-direction:column;gap:16px;margin-block:auto;animation:dlg .18s ease-out}
+.dialog h2{font-family:var(--serif);font-weight:700;font-size:24px;letter-spacing:.06em;color:var(--g1);margin:0;text-shadow:0 2px 0 #000}
+.dialog.how{width:min(100%,560px)}
+.dialog dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;font-size:14px;color:#d8c9ae}
+.dialog dt{font-family:var(--serif);color:var(--g1);font-weight:700}
+.dialog dd{margin:0}
+.dlg-note{margin:0;font-size:13px;color:var(--ash);line-height:1.5}
+.dlg-actions{display:flex;gap:10px;flex-wrap:wrap}
+@keyframes dlg{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.dialog{animation:none}}
+.seg button{font-family:var(--serif);font-weight:700;background:linear-gradient(180deg,#2a2018,#130d0a);border:1px solid var(--g4);color:#b9a37c}
+.seg button[aria-pressed="true"]{border-color:var(--g2);color:var(--g1);background:linear-gradient(180deg,#4a2a14,#231208);box-shadow:inset 0 0 8px rgba(255,170,60,.3)}
+kbd{border-color:var(--g3);color:var(--g1);background:#1a120c}
+
+/* ---- top resource bar ---- */
+.topbar{position:absolute;top:0;left:0;right:0;height:36px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 12px;background:linear-gradient(180deg,#221a14,#0c0907);border-bottom:2px solid var(--g3);box-shadow:0 2px 0 #000,0 6px 16px rgba(0,0,0,.5),inset 0 -1px 0 rgba(243,215,138,.2);pointer-events:auto;padding-top:env(safe-area-inset-top,0px)}
+.tb-left{display:flex;gap:6px}
+.tb-btn{font-family:var(--serif);font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--g1);background:linear-gradient(180deg,#3a2c1d,#150e0a);border:1px solid var(--g3);border-radius:2px;padding:4px 12px;box-shadow:inset 0 1px 0 rgba(255,225,160,.2)}
+.tb-btn:hover{filter:brightness(1.2)}
+#btnFast[aria-pressed="true"]{color:#fff;border-color:var(--g1)}
+.tb-mid{display:flex;align-items:baseline;gap:12px;font-family:var(--serif)}
+.tb-mid b{font-size:16px;color:var(--g1);font-weight:700;text-shadow:0 1px 0 #000}
+.tb-mid span{font-size:12px;color:#cdbfa6;font-family:var(--ui);font-variant-numeric:tabular-nums}
+.tb-mid span.warn{color:#ff7a4a}
+.tb-right{justify-self:end}
+.res{display:inline-flex;align-items:center;gap:7px;font-family:var(--ui);font-weight:700;font-size:15px;color:var(--wc-yellow);text-shadow:0 1px 0 #000;font-variant-numeric:tabular-nums}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#e0a92c 45%,#7a5310 100%);box-shadow:0 0 0 1px #3a2608,0 0 6px rgba(255,200,60,.5)}
+/* multiboard */
+#hBoard{top:46px;right:12px;position:absolute;min-width:190px;padding:6px 10px 8px;background:linear-gradient(180deg,rgba(20,15,12,.92),rgba(8,6,5,.88));border:1px solid var(--g3);box-shadow:0 0 0 1px #000,inset 0 1px 0 rgba(243,215,138,.18);border-radius:2px}
+#hBoard::before{content:"Warlocks · Points";display:block;font-family:var(--serif);font-size:11px;letter-spacing:.12em;color:var(--g2);border-bottom:1px solid var(--g4);padding-bottom:4px;margin-bottom:4px;text-transform:uppercase}
+#hBoard li{font-size:13px}
+#hBoard li span{color:var(--c)}
+#hBoard li b{color:var(--wc-yellow)}
+#feed{top:48px}
+.hud-top,.hud-bottom{display:none}
+
+/* ---- bottom console ---- */
+#console{position:absolute;left:0;right:0;bottom:0;height:192px;display:grid;grid-template-columns:168px 128px minmax(170px,1fr) 108px 286px;gap:14px;align-items:center;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:auto;background:radial-gradient(80% 140% at 50% 120%,rgba(255,140,40,.08),transparent 60%),linear-gradient(180deg,#221a14 0%,#120d0a 30%,#0a0706 100%);border-top:3px solid var(--g3);box-shadow:0 -2px 0 #000,0 -1px 0 1px rgba(243,215,138,.25),0 -14px 34px rgba(0,0,0,.65)}
+#console::before{content:"";position:absolute;left:50%;top:-14px;width:180px;height:14px;transform:translateX(-50%);background:linear-gradient(180deg,#2c2118,#15100c);border:2px solid var(--g3);border-bottom:0;border-radius:10px 10px 0 0;box-shadow:inset 0 1px 0 rgba(243,215,138,.25)}
+.c-mini{width:164px;height:164px;border:2px solid var(--g3);border-radius:4px;background:#0a0706;box-shadow:inset 0 0 14px rgba(0,0,0,.9),0 0 0 1px #000}
+#mini{left:22px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:148px;height:148px;border:0;background:transparent;z-index:1}
+.c-portrait{position:relative;width:124px;height:124px;border:3px solid var(--g2);border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px #000,inset 0 0 18px rgba(0,0,0,.9)}
+.c-portrait img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.05)}
+.c-portrait .p-ring{position:absolute;inset:0;box-shadow:inset 0 0 0 3px var(--pc,#f5c542),inset 0 -30px 30px -10px rgba(0,0,0,.6)}
+.c-info{display:flex;flex-direction:column;gap:7px;min-width:0}
+#uName{font-family:var(--serif);font-weight:700;font-size:19px;color:var(--g1);text-shadow:0 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-info .hp{flex:none;height:16px;background:#1a0c08;border:1px solid #000;box-shadow:0 0 0 1px var(--g4);border-radius:1px}
+.c-info .hp i{background:linear-gradient(180deg,#7df08a,var(--hp1) 40%,var(--hp2))}
+.c-info .hp span{font-size:12px;color:#fff}
+.c-stats{font-size:13px;color:#cdbfa6;font-variant-numeric:tabular-nums}
+.buffs{display:flex;gap:4px;min-height:24px}
+.buffs img{width:24px;height:24px;border:1px solid var(--g3);border-radius:2px;box-shadow:0 0 6px rgba(255,200,100,.3)}
+.c-inv{display:flex;flex-direction:column;align-items:center;gap:4px}
+.c-label{font-family:var(--serif);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--g2)}
+#console #inv{grid-template-columns:repeat(2,46px);gap:4px}
+#console #inv .inv{width:46px;height:46px}
+.c-cmd{justify-self:end}
+#bar{display:grid;grid-template-columns:repeat(5,52px);gap:5px}
+.slot{width:52px;height:52px;border:2px solid var(--g3);background:#0b0807;box-shadow:0 0 0 1px #000,inset 0 0 0 1px rgba(243,215,138,.15)}
+.slot.ready{border-color:var(--g2);box-shadow:0 0 0 1px #000,0 0 8px rgba(255,190,90,.25)}
+.slot.locked{border-color:#2a211c}
+.slot.locked .ico{filter:grayscale(1) brightness(.35)}
+.slot .k{font-family:var(--serif);font-size:12px;color:#fff;top:2px;left:4px;z-index:2}
+.slot .lv{z-index:2}
+.slot.armed{border-color:#fff;box-shadow:0 0 0 2px var(--g1),0 0 16px rgba(255,200,90,.6)}
+.slot .cd,.slot .cdt{z-index:1}
+.ico{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.slot .ic{position:absolute;inset:0}
+.slot .ic .ico{border-radius:1px}
+.inv .ii{position:absolute;inset:0}
+.inv .ii .ico{border-radius:1px}
+.inv.passive{border-color:#6f7f93}
+.inv .k,.inv .cd,.inv .cdt{z-index:1}
+.aim-hint{bottom:206px}
+/* tooltip */
+.wc-tip{position:absolute;right:16px;bottom:206px;width:300px;padding:10px 12px 12px;background:linear-gradient(180deg,rgba(18,14,12,.97),rgba(6,5,4,.97));border:1px solid var(--g3);box-shadow:0 0 0 1px #000,inset 0 1px 0 rgba(243,215,138,.2),0 10px 30px rgba(0,0,0,.6);border-radius:2px;pointer-events:none;z-index:6}
+.wc-tip b{font-family:var(--serif);font-size:15px;color:var(--wc-yellow)}
+.wc-tip .hk{color:var(--g1);font-family:var(--serif);font-size:13px;margin-left:4px}
+.wc-tip .lvl{float:right;font-size:12px;color:#9fc4ff}
+.wc-tip p{margin:6px 0 0;font-size:13px;line-height:1.45;color:#e8dcc2}
+.wc-tip .tip-stats{margin-top:6px;font-size:12px;color:#b9a988}
+/* banner in the same voice */
+#banner strong{font-family:var(--serif);font-weight:900;background:linear-gradient(180deg,#fff4cf,var(--g1) 40%,var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #000) drop-shadow(0 0 20px rgba(255,120,30,.55));text-shadow:none}
+#banner span{font-family:var(--serif);color:var(--g1)}
+/* in-world health bars and names */
+.wl .b{width:46px;height:6px;border:1px solid #000;outline:0;background:#1a0a06}
+.wl .n{font-family:var(--serif);font-size:12px;color:var(--c)}
+
+/* ---- shop, end, pause, lobby in the same frame ---- */
+.shop,.end{background:radial-gradient(120% 140% at 50% 0%,rgba(255,220,150,.06),transparent 55%),linear-gradient(180deg,var(--iron1),var(--iron2) 60%,var(--iron3));border:2px solid var(--g3);box-shadow:0 0 0 1px #000,0 0 0 3px rgba(196,154,70,.35),inset 0 0 0 1px rgba(243,215,138,.18),0 18px 50px rgba(0,0,0,.65)}
+.shop h2,.end h2{font-family:var(--serif);font-weight:700;color:var(--g1);text-shadow:0 2px 0 #000;letter-spacing:.04em}
+.eyebrow{font-family:var(--serif);color:var(--g2);letter-spacing:.2em}
+.shop h3{font-family:var(--serif);color:var(--g2);letter-spacing:.2em}
+.purse b{font-family:var(--serif);color:var(--wc-yellow)}
+.card{background:linear-gradient(180deg,#1d1612,#100b09);border:1px solid var(--g4);box-shadow:inset 0 1px 0 rgba(243,215,138,.08)}
+.card.owned{border-color:var(--g3)}
+.card-head h4{font-family:var(--serif);color:var(--g1)}
+.card-head .ic{width:44px;height:44px;border:2px solid var(--g3);background:#000;padding:0;overflow:hidden;box-shadow:0 0 0 1px #000}
+.card.locked .ic .ico{filter:saturate(.6) brightness(.75)}
+.card button{font-family:var(--serif);font-weight:700;letter-spacing:.04em;background:linear-gradient(180deg,#3a2c1d,#150e0a);border-color:var(--g3);color:var(--g1)}
+.card button:hover:not(:disabled){background:linear-gradient(180deg,#5a3a1a,#241208);border-color:var(--g2)}
+.pips i{border-color:var(--g3)}
+.pips i.on{background:var(--g1);border-color:var(--g1)}
+.item-card{background:linear-gradient(180deg,#1d1612,#100b09);border-color:var(--g4)}
+.item-card b{font-family:var(--serif);color:var(--g1)}
+.item-card .it-price{color:var(--wc-yellow)}
+.item-card .inv{width:40px;height:40px}
+.shop .cta,.end .cta{font-family:var(--serif);background:linear-gradient(180deg,#7a2a10,#360f06);border:2px solid var(--g2);color:#ffe8b0;box-shadow:0 0 0 1px #000,inset 0 1px 0 rgba(255,225,160,.25)}
+.shop .ghost,.end .ghost{font-family:var(--serif);border-color:var(--g3);color:var(--g1)}
+.stand li{background:linear-gradient(180deg,#1b1410,#0f0a08);border:1px solid var(--g4)}
+.stand .pt{color:var(--wc-yellow)}
+
+/* custom gauntlet cursor */
+#game{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 2 L24 13 L15 15.5 L20 26 L16 28 L11 17.5 L4 23 Z' fill='%23e7c46a' stroke='%23231505' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M6 6 L19 13 L13 14.4' fill='none' stroke='%23fff3c2' stroke-width='1' opacity='.8'/%3E%3C/svg%3E") 3 2,auto}
+#cv{cursor:inherit}
+#game button,#game input{cursor:inherit}
+
+/* phones: keep the compact touch layout */
+#game.touch #console{top:calc(40px + env(safe-area-inset-top,0px));bottom:auto;left:50%;right:auto;transform:translateX(-50%);height:auto;width:min(94vw,420px);display:flex;flex-direction:column;align-items:center;gap:4px;padding:0;background:none;border:0;box-shadow:none}
+#game.touch #console::before,#game.touch .c-mini,#game.touch .c-portrait,#game.touch .c-cmd,#game.touch .c-label,#game.touch #uBuffs,#game.touch .c-stats,#game.touch #uName{display:none}
+#game.touch .c-info{width:min(60vw,280px)}
+#game.touch #mini{top:calc(96px + env(safe-area-inset-top,0px));bottom:auto;left:calc(10px + env(safe-area-inset-left,0px));width:94px;height:94px;border:2px solid var(--g3)}
+#game.touch #console #inv{grid-template-columns:repeat(6,34px)}
+#game.touch #console #inv .inv{width:34px;height:34px}
+#game.touch .topbar{grid-template-columns:auto 1fr auto}
+#game.touch .tb-mid span{display:none}
+#game.touch .tb-btn{padding:6px 10px}
+#game.touch #hBoard,#game.touch .wc-tip{display:none}
+.tb .ico{position:absolute;inset:0;border-radius:50%;opacity:.95}
+.tb{border-color:var(--g2)}
+.tb .cd{z-index:1}
+.tb .cdt{z-index:2}
+@media (max-width:900px){
+  #title{flex-direction:column;align-items:stretch;background:linear-gradient(180deg,rgba(8,5,4,.55),rgba(8,5,4,.92) 45%),url("icons/menu_bg.jpg") center top/cover no-repeat,#0b0706}
+  .menu{max-width:none}
+  .dialog{width:100%}
+}
+@media (max-width:1100px) and (min-width:761px){
+  #console{grid-template-columns:150px 0 minmax(150px,1fr) 104px 286px;gap:10px}
+  .c-portrait{display:none}
+}
 </style>
 
 </head>
@@ -300,42 +474,64 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
   <div id="burn"></div>
 
   <div id="hud" hidden>
-    <div class="hud-top">
-      <div class="hud-left">
-        <div class="hud-round"><b id="hRound">Round 1</b><span id="hCrumble"></span></div>
-        <div class="hud-btns">
-          <button id="btnPause" type="button">Pause</button>
-          <button id="btnMute" type="button">Sound on</button>
-          <button id="btnFast" type="button" aria-pressed="false" hidden>Fast-forward</button>
-          <button id="btnFull" type="button" hidden>Full screen</button>
-        </div>
+    <div class="topbar">
+      <div class="tb-left">
+        <button id="btnPause" type="button" class="tb-btn">Pause</button>
+        <button id="btnMute" type="button" class="tb-btn">Sound on</button>
+        <button id="btnFast" type="button" class="tb-btn" aria-pressed="false" hidden>Fast-forward</button>
+        <button id="btnFull" type="button" class="tb-btn" hidden>Full screen</button>
       </div>
-      <ol id="hBoard"></ol>
+      <div class="tb-mid"><b id="hRound">Round 1</b><span id="hCrumble"></span></div>
+      <div class="tb-right"><span class="res" title="Gold"><i class="coin" aria-hidden="true"></i><b id="hGold">0</b></span></div>
     </div>
+    <ol id="hBoard"></ol>
     <ul id="feed"></ul>
     <div class="aim-hint" id="aimHint" hidden></div>
+    <div id="console">
+      <div class="c-mini" aria-hidden="true"></div>
+      <div class="c-portrait"><img src="icons/portrait.jpg" alt="" id="uPortrait"><span class="p-ring"></span></div>
+      <div class="c-info">
+        <b id="uName">Warlock</b>
+        <div class="hp"><i id="hHpFill"></i><span id="hHpText">100 / 100</span></div>
+        <div class="c-stats" id="uStat"></div>
+        <div class="buffs" id="uBuffs"></div>
+      </div>
+      <div class="c-inv"><span class="c-label">Inventory</span><div id="inv" aria-label="Inventory"></div></div>
+      <div class="c-cmd"><div id="bar"></div></div>
+    </div>
     <canvas id="mini" aria-label="Minimap"></canvas>
+    <div id="tip" class="wc-tip" hidden></div>
     <div id="touch" hidden>
       <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
       <div id="tpad"></div>
-    </div>
-    <div class="hud-bottom">
-      <div class="vitals"><div class="hp"><i id="hHpFill"></i><span id="hHpText">100</span></div><span class="gold" id="hGold">0g</span></div>
-      <div class="hud-row"><div id="bar"></div><div id="inv" aria-label="Inventory"></div></div>
     </div>
   </div>
 
   <div id="banner"><strong id="bannerMain"></strong><span id="bannerSub"></span></div>
 
   <section id="title" class="overlay">
-    <div class="title-card">
-      <p class="eyebrow">A Warlock arena brawl</p>
-      <h1>Cinder <span>Ring</span></h1>
-      <p class="lede">Every warlock stands on a shrinking island of basalt. Spells don't just burn, they <em>push</em>. Knock your rivals into the lava and be the last one standing.</p>
-      <div class="field">
-        <label for="optName">Your name</label>
+    <div class="menu" id="menuMain">
+      <div class="logo">
+        <span class="logo-1">Cinder</span><span class="logo-2">Ring</span>
+        <span class="logo-tag">A Warlock arena brawl</span>
+      </div>
+      <p class="lede">Stand on a shrinking island of basalt. Spells don't just burn, they push. Knock your rivals into the lava and be the last one standing.</p>
+      <div class="field name-field">
+        <label for="optName">Warlock name</label>
         <input id="optName" maxlength="14" value="You" autocomplete="off" spellcheck="false">
       </div>
+      <nav class="menu-buttons" aria-label="Main menu">
+        <button type="button" class="wc-btn" id="mSingle">Single Player</button>
+        <button type="button" class="wc-btn" id="btnQuick">Quick Match</button>
+        <button type="button" class="wc-btn" id="mCreate">Create Room</button>
+        <button type="button" class="wc-btn" id="mJoin">Join Room</button>
+        <button type="button" class="wc-btn" id="mHow">How to Play</button>
+      </nav>
+      <p class="mp-note" id="mpNote"></p>
+    </div>
+
+    <div class="dialog wc-frame" id="dlgSingle" hidden>
+      <h2>Single Player</h2>
       <div class="field">
         <span class="lbl" id="lblRivals">Rivals</span>
         <div class="seg" id="optRivals" role="group" aria-labelledby="lblRivals"></div>
@@ -348,25 +544,45 @@ kbd{font-family:var(--ui);font-weight:700;font-size:12px;border:1px solid var(--
         <span class="lbl" id="lblRounds">Rounds</span>
         <div class="seg" id="optRounds" role="group" aria-labelledby="lblRounds"></div>
       </div>
-      <button class="cta" id="btnStart" type="button">Enter the ring</button>
-      <div class="mp">
-        <span class="lbl">Online</span>
-        <div class="mp-row"><button type="button" class="ghost" id="btnQuick">Quick match</button><button type="button" class="ghost" id="btnCreate">Create room</button></div>
-        <div class="mp-row"><input id="optCode" maxlength="5" placeholder="Room code" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Room code"><button type="button" class="ghost" id="btnJoin">Join</button></div>
-        <p class="mp-note" id="mpNote">Create room makes a room for you plus your Rivals count. It starts by itself when it fills up.</p>
+      <div class="dlg-actions"><button class="wc-btn primary" id="btnStart" type="button">Enter the Ring</button><button class="wc-btn small" type="button" data-back>Back</button></div>
+    </div>
+
+    <div class="dialog wc-frame" id="dlgCreate" hidden>
+      <h2>Create Room</h2>
+      <div class="field">
+        <span class="lbl" id="lblRoom">Warlocks in the room</span>
+        <div class="seg" id="optRoom" role="group" aria-labelledby="lblRoom"></div>
       </div>
-      <details class="howto" id="howto">
-        <summary>How to play</summary>
-        <dl>
-          <dt class="t-only">Phone</dt><dd class="t-only">Drag the left stick to walk. Tap Fireball to shoot where your warlock faces (follow the arrow). Tap any other spell to fire it at the nearest rival, or drag it to aim and let go to cast. Drag back to the button to cancel.</dd>
-          <dt>Move</dt><dd>Right-click (or tap) the ground. Hold right-click to steer.</dd>
-          <dt>Cast</dt><dd>Press <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd>, <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd>, <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd>. Items: <kbd>1</kbd>–<kbd>6</kbd>. Spells fly toward your cursor. On touch, tap a spell, then tap a target.</dd>
-          <dt>Lava</dt><dd>Burns 14 HP a second. The lower your HP, the farther every hit throws you.</dd>
-          <dt>Ring</dt><dd>Crumbles every 12 seconds. Fireballs cancel each other out in mid-air.</dd>
-          <dt>Gold</dt><dd>Earned by surviving, killing and dealing damage. Spend it between rounds.</dd>
-          <dt>Keys</dt><dd><kbd>Esc</kbd> pause · <kbd>M</kbd> sound</dd>
-        </dl>
-      </details>
+      <div class="field">
+        <span class="lbl" id="lblRounds2">Rounds</span>
+        <div class="seg" id="optRounds2" role="group" aria-labelledby="lblRounds2"></div>
+      </div>
+      <p class="dlg-note">You get a code and a link to share. The match starts by itself when the room is full, or start early with bots.</p>
+      <div class="dlg-actions"><button class="wc-btn primary" id="btnCreate" type="button">Open the Room</button><button class="wc-btn small" type="button" data-back>Back</button></div>
+    </div>
+
+    <div class="dialog wc-frame" id="dlgJoin" hidden>
+      <h2>Join Room</h2>
+      <div class="field">
+        <label for="optCode">Room code</label>
+        <input id="optCode" maxlength="5" placeholder="ABCDE" autocomplete="off" spellcheck="false" autocapitalize="characters">
+      </div>
+      <div class="dlg-actions"><button class="wc-btn primary" id="btnJoin" type="button">Join</button><button class="wc-btn small" type="button" data-back>Back</button></div>
+    </div>
+
+    <div class="dialog wc-frame how" id="dlgHow" hidden>
+      <h2>How to Play</h2>
+      <dl>
+        <dt class="t-only">Phone</dt><dd class="t-only">Drag the left stick to walk. Tap Fireball to shoot where your warlock faces (follow the arrow). Tap any other spell to fire it at the nearest rival, or drag it to aim and let go to cast. Drag back to the button to cancel.</dd>
+        <dt>Move</dt><dd>Right-click (or tap) the ground. Hold right-click to steer.</dd>
+        <dt>Cast</dt><dd>Spells sit on a grid that matches your keyboard: <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd>, <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd>, <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd>. They fly toward your cursor.</dd>
+        <dt>Items</dt><dd>Buy inventory slots in the shop, then items. Use them with <kbd>1</kbd>–<kbd>6</kbd>.</dd>
+        <dt>Lava</dt><dd>Burns 14 HP a second. The lower your HP, the farther every hit throws you.</dd>
+        <dt>Ring</dt><dd>Shrinks every 12 seconds; every third shrink warps its shape. Fireballs cancel each other out in mid-air.</dd>
+        <dt>Gold</dt><dd>Earned by surviving, killing and dealing damage. Spend it between rounds.</dd>
+        <dt>Keys</dt><dd><kbd>Esc</kbd> pause · <kbd>M</kbd> sound</dd>
+      </dl>
+      <div class="dlg-actions"><button class="wc-btn small" type="button" data-back>Back</button></div>
     </div>
   </section>
 
@@ -516,6 +732,7 @@ const ICON = {
   clarity:  S('<path d="M9.5 3h5M10.5 3v5L6 16a4.5 4.5 0 0 0 4 6h4a4.5 4.5 0 0 0 4-6l-4.5-8V3"/><path d="M7.5 15h9" /><path d="M8 17c2 1 6 1 8 0" stroke-opacity=".6"/>'),
 };
 const ROMAN = ['','I','II','III'];
+const ico = id => `<img class="ico" src="icons/${id}.jpg" alt="" draggable="false">`;
 
 
 /* ---------- 3D scene ---------- */
@@ -910,6 +1127,21 @@ if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass){
     composer = new THREE.EffectComposer(renderer, rt);
     composer.addPass(new THREE.RenderPass(scene, camera));
     composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(512, 512), .7, .45, .74));
+    composer.addPass(new THREE.ShaderPass({
+      uniforms:{ tDiffuse:{ value:null }, uSat:{ value:1.14 }, uCon:{ value:1.09 }, uVig:{ value:.42 }, uWarm:{ value:.06 } },
+      vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }',
+      fragmentShader:`uniform sampler2D tDiffuse; uniform float uSat, uCon, uVig, uWarm; varying vec2 vUv;
+        void main(){
+          vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb;
+          float l = dot(col, vec3(.299, .587, .114));
+          col = mix(vec3(l), col, uSat);
+          col = (col - .5)*uCon + .5;
+          col += vec3(uWarm, uWarm*.35, -uWarm*.6)*smoothstep(.35, 1.0, l);
+          col += vec3(-.012, 0.0, .028)*(1.0 - smoothstep(0.0, .35, l));
+          col *= 1.0 - uVig*smoothstep(.42, .88, distance(vUv, vec2(.5)));
+          gl_FragColor = vec4(clamp(col, 0.0, 1.0), c.a);
+        }`
+    }));
     composerReady = true;
   } catch { composer = null; }
 }
@@ -973,7 +1205,7 @@ const sfx = {
 };
 
 /* ---------- state ---------- */
-const settings = { name:'You', rivals:3, diff:'adept', rounds:5 };
+const settings = { name:'You', rivals:3, diff:'adept', rounds:5, roomSize:4 };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('cinder-ring-settings') || '{}')); } catch {}
 const state = {
   phase:'title', demo:true, paused:false, time:0, t:0, round:0, rounds:5, diff:'adept',
@@ -1157,7 +1389,7 @@ function renderShop(){
     const label = maxed ? 'Mastered' : lv === 0 ? `Learn · ${cost}g` : `Upgrade to ${ROMAN[lv+1]} · ${cost}g`;
     const showLv = lv === 0 ? 1 : Math.min(3, maxed ? 3 : lv+1);
     return `<div class="card ${lv?'owned':'locked'}">
-      <div class="card-head"><span class="ic">${ICON[id]}</span><div><h4>${s.name}</h4><span class="sub">Key <kbd>${s.key}</kbd>${lv?` · Level ${ROMAN[lv]}`:''}</span></div><span class="pips">${pips(lv)}</span></div>
+      <div class="card-head"><span class="ic">${ico(id)}</span><div><h4>${s.name}</h4><span class="sub">Key <kbd>${s.key}</kbd>${lv?` · Level ${ROMAN[lv]}`:''}</span></div><span class="pips">${pips(lv)}</span></div>
       <p>${s.desc}</p>
       <p class="stats">${maxed?'':(lv? 'Next: ' : '')}${spellStats(id, showLv)}</p>
       <button type="button" id="buy-${id}" data-buy="spell:${id}" class="${maxed?'maxed':''}" ${maxed||h.gold<cost?'disabled':''}>${label}</button>
@@ -1171,7 +1403,7 @@ function renderShop(){
                   : '<span class="inv locked" title="Unlock the slots before this one first"></span>';
     }
     const id = inv.items[i];
-    return id ? `<button type="button" class="inv" id="sell-${i}" data-buy="sell:${i}" title="Sell ${ITEMS[id].name} for ${Math.floor(ITEMS[id].cost/2)} gold">${ICON[id]}<span class="sell">Sell</span></button>`
+    return id ? `<button type="button" class="inv" id="sell-${i}" data-buy="sell:${i}" title="Sell ${ITEMS[id].name} for ${Math.floor(ITEMS[id].cost/2)} gold">${ico(id)}<span class="sell">Sell</span></button>`
               : '<span class="inv empty" title="Empty slot"></span>';
   }).join('');
   const free = inv.items.some((x, j) => j < inv.slots && !x);
@@ -1179,7 +1411,7 @@ function renderShop(){
     const it = ITEMS[id], owned = it.kind !== 'charge' && inv.items.includes(id), can = !owned && free && h.gold >= it.cost;
     const tag = owned ? 'Owned' : !inv.slots ? 'Needs a slot' : !free ? 'No free slot' : `${it.cost}g`;
     return `<button type="button" class="item-card${owned ? ' owned' : ''}" id="buy-${id}" data-buy="item:${id}" ${can ? '' : 'disabled'}>
-      <span class="inv">${ICON[id]}</span><span class="it-body"><b>${it.name}</b><small>${it.desc}</small></span><span class="it-price">${tag}</span></button>`;
+      <span class="inv">${ico(id)}</span><span class="it-body"><b>${it.name}</b><small>${it.desc}</small></span><span class="it-price">${tag}</span></button>`;
   }).join('');
   $('shopStand').innerHTML = standRows(standings());
 }
@@ -1928,7 +2160,7 @@ function step(now, draw){
   }
   hudClock -= rdt;
   if (hudClock <= 0){ hudClock = .08; if (!state.demo && !$('hud').hidden) updateHud(); }
-  if (draw) render3D();
+  if (draw && $('title').hidden) render3D();   // the painted menu covers the arena, so skip the 3D work there
 }
 try {
   const tick = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 40)'], { type:'text/javascript' })));
@@ -1993,7 +2225,7 @@ const TB_SLOTS = [[100,180],[100,208],[100,236],[100,264],[172,180],[172,199],[1
 function buildTouch(){
   if (!IS_TOUCH || state.demo || !state.human) return;
   const h = state.human, owned = TOUCH_ORDER.filter(id => h.spells[id]);
-  const btn = (id, x, y, main) => `<button type="button" class="tb${main ? ' main' : ''}" data-spell="${id}" aria-label="${SP[id].name}" style="--x:${x.toFixed(0)}px;--y:${y.toFixed(0)}px">${ICON[id]}<span class="cd"></span><span class="cdt"></span></button>`;
+  const btn = (id, x, y, main) => `<button type="button" class="tb${main ? ' main' : ''}" data-spell="${id}" aria-label="${SP[id].name}" style="--x:${x.toFixed(0)}px;--y:${y.toFixed(0)}px">${ico(id)}<span class="cd"></span><span class="cdt"></span></button>`;
   $('tpad').innerHTML = btn('fireball', 0, 0, true) + owned.map((id, i) => btn(id, ...TB_SLOTS[i])).join('');
   $('touch').hidden = false;
 }
@@ -2128,7 +2360,7 @@ function updateInv(h){
     el.classList.toggle('locked', locked); el.classList.toggle('empty', !locked && !id); el.classList.toggle('passive', !!it && it.kind === 'passive');
     const ii = el.querySelector('.ii');
     if (ii.dataset.id !== (id || '') || el.dataset.locked !== String(locked)){
-      ii.dataset.id = id || ''; el.dataset.locked = String(locked); ii.innerHTML = id ? ICON[id] : '';
+      ii.dataset.id = id || ''; el.dataset.locked = String(locked); ii.innerHTML = id ? ico(id) : '';
       el.title = it ? `${it.name}: ${it.desc}` : locked ? 'Locked slot. Unlock it in the shop.' : 'Empty slot';
     }
     const cd = h.inv.icd[i] || 0, mx = h.inv.icdMax[i] || 1;
@@ -2146,9 +2378,24 @@ $('inv').addEventListener('click', e => {
   const aim = IS_TOUCH || !state.hasMouse ? { x:h.x + Math.cos(h.facing)*400, y:h.y + Math.sin(h.facing)*400 } : state.cursor;
   useCmd(h, +b.dataset.slot, aim.x, aim.y);
 });
+function tipSpell(id){
+  const s = SP[id], h = state.human, lv = h ? (h.spells[id] || 0) : 0;
+  return `<b>${s.name}</b><span class="hk">(${s.key})</span><span class="lvl">${lv ? 'Level ' + ROMAN[lv] : 'Not learned'}</span><p>${s.desc}</p><div class="tip-stats">${spellStats(id, Math.max(1, lv))}</div>`;
+}
+function tipItem(i){
+  const h = state.human; if (!h) return '';
+  if (i >= h.inv.slots) return '<b>Locked slot</b><p>Unlock it in the shop between rounds.</p>';
+  const id = h.inv.items[i]; if (!id) return '<b>Empty slot</b><p>Buy items in the shop between rounds.</p>';
+  const it = ITEMS[id];
+  return `<b>${it.name}</b><span class="hk">(${i + 1})</span><span class="lvl">${it.kind === 'passive' ? 'Passive' : it.kind === 'charge' ? 'Single use' : 'Active · ' + it.cd + 's'}</span><p>${it.desc}</p>`;
+}
+for (const [box, fn] of [[$('bar'), b => tipSpell(b.dataset.spell)], [$('inv'), b => tipItem(+b.dataset.slot)]]){
+  box.addEventListener('mouseover', e => { const b = e.target.closest('button'); if (!b || IS_TOUCH) return; $('tip').innerHTML = fn(b); $('tip').hidden = false; });
+  box.addEventListener('mouseout', e => { if (!e.relatedTarget || !box.contains(e.relatedTarget)) $('tip').hidden = true; });
+}
 function buildBar(){
   buildInv();
-  $('bar').innerHTML = ORDER.map(id => `<button type="button" class="slot" id="slot-${id}" data-spell="${id}" title="${SP[id].name} (${SP[id].key})"><span class="ic">${ICON[id]}</span><span class="k">${SP[id].key}</span><span class="lv"></span><span class="cd"></span><span class="cdt"></span></button>`).join('');
+  $('bar').innerHTML = ORDER.map(id => `<button type="button" class="slot" id="slot-${id}" data-spell="${id}" title="${SP[id].name} (${SP[id].key})"><span class="ic">${ico(id)}</span><span class="k">${SP[id].key}</span><span class="lv"></span><span class="cd"></span><span class="cdt"></span></button>`).join('');
 }
 $('bar').addEventListener('click', e => {
   const b = e.target.closest('.slot'); if (!b) return;
@@ -2170,8 +2417,13 @@ function updateHud(){
   const frac = clamp(h.hp/h.maxHp, 0, 1);
   $('hHpFill').style.transform = `scaleX(${frac})`;
   $('hHpText').textContent = h.alive ? `${Math.ceil(h.hp)} / ${h.maxHp}` : 'Fallen';
-  $('hGold').textContent = `${h.gold}g`;
+  $('hGold').textContent = h.gold;
   updateInv(h);
+  $('uName').textContent = h.name;
+  $('uStat').textContent = `Kills ${h.kills} · Points ${h.points} · Rounds won ${h.roundsWon}`;
+  document.querySelector('.p-ring').style.setProperty('--pc', h.color);
+  const buffs = [['shield', h.shieldT], ['haste', h.hasteT], ['treads', h.treadsT], ['watch', h.watchT], ['invis', h.invisT], ['clarity', h.clarityT]].filter(b => b[1] > 0).map(b => b[0]).join(',');
+  if (buffs !== updateHud.buffs){ updateHud.buffs = buffs; $('uBuffs').innerHTML = buffs ? buffs.split(',').map(ico).join('') : ''; }
   if (IS_TOUCH) updateTouch(h);
   drawMini();
   for (const id of ORDER){
@@ -2204,7 +2456,7 @@ $('btnResume').addEventListener('click', togglePause);
 $('btnFast').addEventListener('click', () => { state.fast = !state.fast; $('btnFast').setAttribute('aria-pressed', String(state.fast)); });
 function toMenu(){
   if (NET.role) netShutdown();
-  $('btnRematch').hidden = false; $('btnMenu').textContent = 'Change settings'; $('lobby').hidden = true;
+  $('btnRematch').hidden = false; $('btnMenu').textContent = 'Change settings'; $('lobby').hidden = true; dlg(null);
   state.paused = false;
   ['pause','shop','end','hud'].forEach(id => $(id).hidden = true);
   $('title').hidden = false; setArmed(null);
@@ -2602,7 +2854,7 @@ function becomeGuest(peer, code, j){
 async function mpRun(label, fn){
   AU.init();
   const note = $('mpNote'); note.textContent = label; note.classList.remove('err');
-  document.querySelectorAll('.mp button').forEach(b => b.disabled = true);
+  document.querySelectorAll('#title button').forEach(b => b.disabled = true);
   try { await fn(); note.textContent = ''; }
   catch (e){
     note.classList.add('err');
@@ -2613,13 +2865,13 @@ async function mpRun(label, fn){
       : t === 'full' ? 'That room is full or already playing.'
       : `Online play could not connect here. It runs on the public site: <a href="https://cinderring.tech/" target="_blank" rel="noopener">cinderring.tech</a>`;
   }
-  finally { document.querySelectorAll('.mp button').forEach(b => b.disabled = false); }
+  finally { document.querySelectorAll('#title button').forEach(b => b.disabled = false); }
 }
 function createRoom(){
   return mpRun('Opening a room…', async () => {
     for (let i = 0; i < 4; i++){
       const code = newCode();
-      try { const peer = await openPeer(PFX + code); becomeHost(peer, code, false, settings.rivals + 1); return; }
+      try { const peer = await openPeer(PFX + code); becomeHost(peer, code, false, settings.roomSize); return; }
       catch (e){ if (e.type !== 'unavailable-id') throw e; }
     }
     throw new Error('busy');
@@ -2726,11 +2978,11 @@ $('btnCopy').addEventListener('click', () => {
 /* ---------- title settings ---------- */
 function seg(id, values, labelFn, key){
   const el = $(id);
-  el.innerHTML = values.map(v => `<button type="button" id="${id}-${v}" data-v="${v}" aria-pressed="${settings[key]==v}">${labelFn(v)}</button>`).join('');
+  el.innerHTML = values.map(v => `<button type="button" id="${id}-${v}" data-v="${v}" data-key="${key}" aria-pressed="${settings[key]==v}">${labelFn(v)}</button>`).join('');
   el.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const v = b.dataset.v; settings[key] = isNaN(+v) ? v : +v;
-    el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelectorAll(`.seg button[data-key="${key}"]`).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v == v)));
     saveSettings();
   });
 }
@@ -2738,6 +2990,14 @@ function saveSettings(){ try { localStorage.setItem('cinder-ring-settings', JSON
 seg('optRivals', [1,2,3,4,5,6,7], v => v, 'rivals');
 seg('optDiff', Object.keys(DIFF), v => DIFF[v].label, 'diff');
 seg('optRounds', [3,5,7], v => v, 'rounds');
+seg('optRoom', [2,3,4,5,6,7,8], v => v, 'roomSize');
+seg('optRounds2', [3,5,7], v => v, 'rounds');
+function dlg(id){ ['dlgSingle','dlgCreate','dlgJoin','dlgHow'].forEach(d => $(d).hidden = d !== id); }
+$('mSingle').addEventListener('click', () => { AU.init(); dlg('dlgSingle'); });
+$('mCreate').addEventListener('click', () => { AU.init(); dlg('dlgCreate'); });
+$('mJoin').addEventListener('click', () => { AU.init(); dlg('dlgJoin'); $('optCode').focus(); });
+$('mHow').addEventListener('click', () => dlg('dlgHow'));
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => dlg(null)));
 $('optName').value = settings.name;
 $('optName').addEventListener('input', e => { settings.name = e.target.value; saveSettings(); });
 $('btnStart').addEventListener('click', () => { AU.init(); $('title').hidden = true; newMatch(false); });
@@ -2925,7 +3185,7 @@ function buildActors(){
     const gem = mk(LIMB_GEO.gem, new THREE.MeshBasicMaterial({ color:glowCol }), staff, 1, 56, 0, false); gem.scale.y = 1.5;
     const gemGlow = glow(col, 34, .95); gemGlow.position.set(1, 56, 0); staff.add(gemGlow);
 
-    const sel = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color:w.human ? 0xf5c542 : col, transparent:true, opacity:w.human ? .9 : .45, depthWrite:false }));
+    const sel = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color:w.human ? 0x44e060 : 0xe0442c, transparent:true, opacity:w.human ? .9 : .5, depthWrite:false }));
     sel.scale.set(w.human ? 25 : 22, 1, w.human ? 25 : 22); sel.position.y = .9; group.add(sel);
     if (w.human && IS_TOUCH){   // facing arrow for tap-to-fire aiming
       const arrow = new THREE.Mesh(ARROW_GEO, new THREE.MeshBasicMaterial({ color:0xffc86a, transparent:true, opacity:.85, depthWrite:false, side:THREE.DoubleSide }));
@@ -3328,7 +3588,7 @@ function camUpdate(dt){
   const k = Math.min(1, dt*4);
   C.fx += (fx - C.fx)*k; C.fy += (fy - C.fy)*k;
   C.viewR += (want - C.viewR)*Math.min(1, dt*1.6);
-  const top = hudOn ? 44 : 0, bot = hudOn && !IS_TOUCH ? 104 : 0;
+  const top = hudOn ? 36 : 0, bot = hudOn && !IS_TOUCH ? 192 : 0;
   const titleWide = !$('title').hidden && W > 900;
   const effW = titleWide ? W*.58 : W, effH = Math.max(120, H - top - bot);
   const cxEff = titleWide ? W*.68 : W/2, cyEff = top + effH/2;
@@ -3396,7 +3656,7 @@ function render3D(){
     a.label.style.transform = `translate(${lx.toFixed(1)}px,${ly.toFixed(1)}px) translate(-50%,-100%)`;
     const f = clamp(w.hp/w.maxHp, 0, 1);
     a.bar.style.transform = `scaleX(${f.toFixed(3)})`;
-    a.bar.style.background = f > .5 ? w.color : f > .25 ? '#ffb54a' : '#ff5a3c';
+    a.bar.style.background = f > .6 ? '#3fdc4c' : f > .3 ? '#e8d23a' : '#e8402a';
   }
 
   sync(state.projectiles, makeProj, updProj, 'proj');
